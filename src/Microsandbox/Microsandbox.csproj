@@ -6,11 +6,17 @@
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
-    <PackageId>Microsandbox</PackageId>
+    <PackageId>Withakay.Microsandbox</PackageId>
+    <AssemblyName>Withakay.Microsandbox</AssemblyName>
     <Version>0.6.6</Version>
     <PackageVersion Condition="'$(PackageVersion)' == ''">$(Version)</PackageVersion>
-    <Description>.NET SDK for microsandbox with RID-specific native runtime assets.</Description>
-    <RepositoryUrl>https://github.com/superradcompany/microsandbox</RepositoryUrl>
+    <Title>Unofficial microsandbox SDK for .NET</Title>
+    <Authors>Withakay</Authors>
+    <Description>Unofficial .NET SDK for microsandbox with RID-specific native runtime assets. This package is not an official microsandbox distribution.</Description>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageTags>microsandbox;sandbox;virtual-machine;vm</PackageTags>
+    <RepositoryUrl>https://github.com/withakay/microsandbox</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <IncludeNativeAssets Condition="'$(IncludeNativeAssets)' == ''">true</IncludeNativeAssets>
     <RequireNativeAssets Condition="'$(RequireNativeAssets)' == ''">true</RequireNativeAssets>

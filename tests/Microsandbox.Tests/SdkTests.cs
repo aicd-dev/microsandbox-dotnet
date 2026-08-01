@@ -232,6 +232,13 @@ public sealed class SdkTests
     }
 
     [Test]
+    [Arguments("0.6.7", "0.6.7")]
+    [Arguments("0.6.7+abcdef", "0.6.7")]
+    [Arguments("0.6.7-rc.1+abcdef", "0.6.7-rc.1")]
+    public void ManagedVersionPreservesPrereleaseIdentifiers(string informationalVersion, string expected) =>
+        Equal(expected, NativeApi.NormalizeManagedVersion(informationalVersion));
+
+    [Test]
     public async Task RetryableCompletionStateRestoresOpenAfterNativeFailure()
     {
         var state = new RetryableCompletionState();

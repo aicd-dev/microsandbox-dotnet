@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
@@ -1650,10 +1651,15 @@ internal sealed class NativeApi
 
     private static string GetManagedVersion()
     {
-        var version = typeof(NativeApi).Assembly.GetName().Version
-            ?? throw new InvalidOperationException("The Microsandbox assembly does not declare a version.");
-        return $"{version.Major}.{version.Minor}.{version.Build}";
+        var version = typeof(NativeApi).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion
+            ?? throw new InvalidOperationException("The Microsandbox assembly does not declare an informational version.");
+        return NormalizeManagedVersion(version);
     }
+
+    internal static string NormalizeManagedVersion(string informationalVersion) =>
+        informationalVersion.Split('+', 2)[0];
 
     private static IEnumerable<string> CandidatePaths(string? explicitPath)
     {

@@ -1,5 +1,10 @@
 # microsandbox for .NET
 
+> [!IMPORTANT]
+> `Withakay.Microsandbox` is currently an unofficial package and is not an
+> official microsandbox distribution. Its public C# API remains in the
+> `Microsandbox` namespace so consumers can migrate without changing source imports.
+
 .NET SDK targeting .NET 8 over the same native C ABI used by the Go SDK. It covers
 native loading, creation and detached creation, collected and streaming command execution,
 name-addressed lookup and lifecycle operations, cancellation, and explicit
@@ -64,7 +69,7 @@ For a release-shaped package, download or copy the five Go release assets and
 the release's `checksums.sha256` into one directory, then stage and validate them:
 
 ```bash
-mise run stage-native -- /path/to/release-assets 0.6.6
+mise run stage-native -- /path/to/release-assets RELEASE_VERSION
 mise run pack-release
 mise run inspect
 ```
@@ -90,6 +95,12 @@ the managed package. Incompatible candidates are unloaded before resolution fall
 back to the next candidate.
 
 ## Usage
+
+Install the package from NuGet.org:
+
+```bash
+dotnet add package Withakay.Microsandbox
+```
 
 ```csharp
 using Microsandbox;
@@ -168,6 +179,31 @@ var handle = await client.LookupAsync("dotnet-demo");
 await using var connected = await handle.ConnectAsync();
 await connected.KillAsync();
 ```
+
+## Publishing
+
+`pack-release` creates `Withakay.Microsandbox.<version>.nupkg`; the assembly is
+also named `Withakay.Microsandbox`, while the source namespace remains
+`Microsandbox`.
+
+Tag releases publish through the `nuget-publish` job in
+`.github/workflows/release.yml`. The job uses GitHub OIDC to obtain a temporary
+NuGet.org API key, so no long-lived API key is stored in GitHub. The matching
+trusted publishing policy on NuGet.org must use repository owner
+`withakay`, repository `microsandbox`, workflow `release.yml`, and GitHub
+environment `nuget`. Set the `NUGET_USER` variable on that environment to the
+NuGet.org username that owns the policy.
+
+`.github/workflows/nightly-upstream.yml` runs nightly and may also be dispatched
+manually. It merges the latest stable `superradcompany/microsandbox` release tag
+into this fork's `main` branch. If the matching `Withakay.Microsandbox` version
+does not exist on NuGet.org, it downloads the upstream release assets, validates
+their checksums and native ABI, runs the .NET tests, and publishes that exact
+version. Add a second NuGet.org trusted publishing policy with the same owner,
+repository, and `nuget` environment, but workflow `nightly-upstream.yml`.
+
+NuGet package versions are immutable. Increment `Version` before publishing a
+replacement, and stage native assets from the matching microsandbox release.
 
 `DisposeAsync` closes any handle that has not been detached. For a
 lifecycle-owning sandbox, native close stops the VM; call `DetachAsync` only
