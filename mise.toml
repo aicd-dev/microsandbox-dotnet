@@ -1,0 +1,62 @@
+[tools]
+dotnet = "10"
+
+[tasks.restore]
+description = "Restore .NET SDK dependencies"
+run = "dotnet restore Microsandbox.slnx"
+
+[tasks.build]
+description = "Build the .NET SDK"
+depends = ["restore"]
+run = "dotnet build Microsandbox.slnx --no-restore"
+
+[tasks.test]
+description = "Run the TUnit test suite"
+depends = ["build"]
+run = "dotnet test Microsandbox.slnx --no-build --no-restore"
+
+[tasks.pack-local]
+description = "Create a managed-only local NuGet package"
+depends = ["restore"]
+run = "dotnet pack src/Microsandbox/Microsandbox.csproj --no-restore --output artifacts -p:IncludeNativeAssets=false -p:RequireNativeAssets=false"
+
+[tasks.pack]
+description = "Alias for pack-local"
+depends = ["pack-local"]
+
+[tasks.stage-native]
+description = "Stage the five Go release assets into NuGet RID directories"
+run = "./scripts/stage-native.sh"
+
+[tasks.pack-release]
+description = "Create a NuGet package containing all supported native RID assets"
+depends = ["restore"]
+run = "dotnet pack src/Microsandbox/Microsandbox.csproj --no-restore --configuration Release --output artifacts -p:IncludeNativeAssets=true -p:RequireNativeAssets=true"
+
+[tasks.inspect]
+description = "List the contents of the newest local NuGet package"
+run = '''
+package=$(ls -t artifacts/*.nupkg 2>/dev/null | head -n 1)
+test -n "$package" || { echo "no package found under artifacts" >&2; exit 1; }
+unzip -l "$package"
+'''
+
+[tasks.native-build]
+description = "Build the existing Rust C ABI used by the Go SDK"
+run = "cargo build --release --manifest-path ../go/native/Cargo.toml"
+
+[tasks.test-native]
+description = "Build the C ABI and verify it through .NET"
+depends = ["native-build", "build"]
+run = '''
+case "$(uname -s)" in
+  Darwin) library="$(pwd)/../../target/release/libmicrosandbox_go_ffi.dylib" ;;
+  Linux) library="$(pwd)/../../target/release/libmicrosandbox_go_ffi.so" ;;
+  *) echo "test-native currently supports macOS and Linux" >&2; exit 1 ;;
+esac
+MICROSANDBOX_FFI_LIBRARY="$library" dotnet test Microsandbox.slnx --no-build --no-restore
+'''
+
+[tasks.check]
+description = "Build and test the .NET SDK"
+depends = ["test"]
