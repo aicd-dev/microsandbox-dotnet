@@ -15,6 +15,15 @@ description = "Run the TUnit test suite"
 depends = ["build"]
 run = "dotnet test Microsandbox.slnx --no-build --no-restore"
 
+[tasks.examples-build]
+description = "Build all .NET 10 file-based app examples"
+depends = ["build"]
+run = '''
+for example in examples/*.cs; do
+  dotnet build "$example"
+done
+'''
+
 [tasks.pack-local]
 description = "Create a managed-only local NuGet package"
 depends = ["restore"]
@@ -59,4 +68,4 @@ MICROSANDBOX_FFI_LIBRARY="$library" dotnet test Microsandbox.slnx --no-build --n
 
 [tasks.check]
 description = "Build and test the .NET SDK"
-depends = ["test"]
+depends = ["test", "examples-build"]

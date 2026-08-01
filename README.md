@@ -34,6 +34,13 @@ mise install
 mise run check
 ```
 
+Runnable [.NET 10 file-based app examples](examples/README.md) cover basic
+lifecycle, streaming exec, filesystem I/O, detached sandboxes, and metrics:
+
+```bash
+dotnet run --file examples/basic.cs
+```
+
 Build the Rust C ABI and exercise native loading from TUnit:
 
 ```bash
