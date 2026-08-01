@@ -1,6 +1,6 @@
 # microsandbox for .NET
 
-.NET 10 SDK over the same native C ABI used by the Go SDK. The SDK covers
+.NET SDK targeting .NET 8 over the same native C ABI used by the Go SDK. It covers
 native loading, creation and detached creation, collected and streaming command execution,
 name-addressed lookup and lifecycle operations, cancellation, and explicit
 native handle ownership.
