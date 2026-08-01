@@ -1,8 +1,8 @@
-# .NET file-based app examples
+# .NET examples
 
-These [.NET 10 file-based apps](https://learn.microsoft.com/dotnet/csharp/fundamentals/tutorials/file-based-programs)
-reinterpret representative Go SDK examples without adding a project file per example.
+These examples reinterpret some of the Go SDK examples as [.NET 10 file-based apps](https://learn.microsoft.com/dotnet/csharp/fundamentals/tutorials/file-based-programs)
 Each source file references the local SDK through a `#:project` directive.
+
 
 | Example | Demonstrates |
 | --- | --- |
@@ -11,6 +11,11 @@ Each source file references the local SDK through a `#:project` directive.
 | [`filesystem.cs`](filesystem.cs) | Guest file operations, host transfer, and streaming I/O |
 | [`detached.cs`](detached.cs) | Detach, list, reconnect, verify persistence, and clean up |
 | [`metrics.cs`](metrics.cs) | Point, streaming, and all-sandbox metrics |
+| [`snapshot-fork.cs`](snapshot-fork.cs) | Snapshot creation, verification, indexing, and forking |
+| [`ports.cs`](ports.cs) | TCP host-to-guest port publishing |
+| [`volumes.cs`](volumes.cs) | Named volume creation, listing, duplicate errors, and removal |
+| [`secrets.cs`](secrets.cs) | Secret placeholders without guest-value exposure |
+| [`patches.cs`](patches.cs) | Root filesystem text, append, mkdir, symlink, copy, and remove patches |
 
 ## Run
 
@@ -30,9 +35,14 @@ dotnet run --file examples/streaming-exec.cs
 dotnet run --file examples/filesystem.cs
 dotnet run --file examples/detached.cs
 dotnet run --file examples/metrics.cs
+dotnet run --file examples/snapshot-fork.cs
+dotnet run --file examples/ports.cs
+dotnet run --file examples/volumes.cs
+dotnet run --file examples/secrets.cs
+dotnet run --file examples/patches.cs
 ```
 
-When working from a source checkout, build the repository's native C ABI first,
+When working from a source checkout, [build the repository's native C ABI](../README.md#development) first,
 then point the example at it. `MICROSANDBOX_MSB_PATH` is optional when `msb` is
 already discoverable:
 
