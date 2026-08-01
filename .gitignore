@@ -3,4 +3,5 @@
 TestResults/
 artifacts/
 artifacts*/
+.runtime*/
 src/Microsandbox/runtimes/

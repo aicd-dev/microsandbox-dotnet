@@ -27,20 +27,46 @@ SDK is available:
 dotnet --version
 ```
 
-From `sdk/dotnet`, run any example directly with the .NET CLI:
+### Quick start with release binaries
+
+From `sdk/dotnet`, download the latest release, verify its checksums, and load
+the generated environment file. The version property compiles the checkout's
+managed SDK against that exact native release:
 
 ```bash
-dotnet run --file examples/basic.cs
-dotnet run --file examples/streaming-exec.cs
-dotnet run --file examples/filesystem.cs
-dotnet run --file examples/detached.cs
-dotnet run --file examples/metrics.cs
-dotnet run --file examples/snapshot-fork.cs
-dotnet run --file examples/ports.cs
-dotnet run --file examples/volumes.cs
-dotnet run --file examples/secrets.cs
-dotnet run --file examples/patches.cs
+dotnet run --file scripts/download-runtime.cs
+source .runtime/env.sh
+dotnet run --file examples/basic.cs -p:Version="$MICROSANDBOX_RELEASE_VERSION"
 ```
+
+PowerShell uses the same downloader:
+
+```powershell
+dotnet run --file scripts/download-runtime.cs
+. .\.runtime\env.ps1
+dotnet run --file examples/basic.cs -p:Version=$env:MICROSANDBOX_RELEASE_VERSION
+```
+
+This downloads `msb`, `libkrunfw`, and the native FFI library into the ignored
+`sdk/dotnet/.runtime` directory. It does not require Rust, Docker, `just`, or a
+native build toolchain.
+
+Run any example directly with the .NET CLI:
+
+```bash
+dotnet run --file examples/basic.cs -p:Version="$MICROSANDBOX_RELEASE_VERSION"
+dotnet run --file examples/streaming-exec.cs -p:Version="$MICROSANDBOX_RELEASE_VERSION"
+dotnet run --file examples/filesystem.cs -p:Version="$MICROSANDBOX_RELEASE_VERSION"
+dotnet run --file examples/detached.cs -p:Version="$MICROSANDBOX_RELEASE_VERSION"
+dotnet run --file examples/metrics.cs -p:Version="$MICROSANDBOX_RELEASE_VERSION"
+dotnet run --file examples/snapshot-fork.cs -p:Version="$MICROSANDBOX_RELEASE_VERSION"
+dotnet run --file examples/ports.cs -p:Version="$MICROSANDBOX_RELEASE_VERSION"
+dotnet run --file examples/volumes.cs -p:Version="$MICROSANDBOX_RELEASE_VERSION"
+dotnet run --file examples/secrets.cs -p:Version="$MICROSANDBOX_RELEASE_VERSION"
+dotnet run --file examples/patches.cs -p:Version="$MICROSANDBOX_RELEASE_VERSION"
+```
+
+### Build the runtime from source
 
 When working from a source checkout, [build the repository's native C ABI](../README.md#development) first,
 then point the example at it. `MICROSANDBOX_MSB_PATH` is optional when `msb` is

@@ -24,6 +24,10 @@ for example in examples/*.cs; do
 done
 '''
 
+[tasks.runtime-download]
+description = "Download the latest release runtime for local examples"
+run = "dotnet run --file scripts/download-runtime.cs"
+
 [tasks.pack-local]
 description = "Create a managed-only local NuGet package"
 depends = ["restore"]

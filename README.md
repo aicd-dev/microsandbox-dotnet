@@ -38,7 +38,9 @@ Runnable [.NET 10 file-based app examples](examples/README.md) cover basic
 lifecycle, streaming exec, filesystem I/O, detached sandboxes, and metrics:
 
 ```bash
-dotnet run --file examples/basic.cs
+dotnet run --file scripts/download-runtime.cs
+source .runtime/env.sh
+dotnet run --file examples/basic.cs -p:Version="$MICROSANDBOX_RELEASE_VERSION"
 ```
 
 Build the Rust C ABI and exercise native loading from TUnit:
