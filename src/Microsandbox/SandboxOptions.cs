@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Microsandbox;
 
@@ -599,6 +600,7 @@ internal static class JsonDefaults
     internal static readonly JsonSerializerOptions Options = new()
     {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver(),
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower) },
     };
 }
