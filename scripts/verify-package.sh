@@ -20,12 +20,12 @@ require_entry() {
 
 require_entry README.md
 require_entry LICENSE
-require_entry Withakay.Microsandbox.nuspec
-require_entry lib/net8.0/Withakay.Microsandbox.dll
-require_entry lib/net8.0/Withakay.Microsandbox.xml
+require_entry AICD.Microsandbox.nuspec
+require_entry lib/net8.0/AICD.Microsandbox.dll
+require_entry lib/net8.0/AICD.Microsandbox.xml
 
-nuspec=$(unzip -p "$package" Withakay.Microsandbox.nuspec)
-grep -Fq '<id>Withakay.Microsandbox</id>' <<< "$nuspec" || {
+nuspec=$(unzip -p "$package" AICD.Microsandbox.nuspec)
+grep -Fq '<id>AICD.Microsandbox</id>' <<< "$nuspec" || {
   echo "package nuspec has an unexpected package id" >&2
   exit 1
 }

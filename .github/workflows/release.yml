@@ -45,7 +45,7 @@ jobs:
       - name: Pack and verify release package
         run: |
           dotnet pack src/Microsandbox/Microsandbox.csproj --no-build --no-restore --configuration Release --output artifacts
-          scripts/verify-package.sh "artifacts/Withakay.Microsandbox.${{ steps.version.outputs.value }}.nupkg" release
+          scripts/verify-package.sh "artifacts/AICD.Microsandbox.${{ steps.version.outputs.value }}.nupkg" release
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: nuget-package
@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: nuget
-      url: https://www.nuget.org/packages/Withakay.Microsandbox
+      url: https://www.nuget.org/packages/AICD.Microsandbox
     permissions:
       id-token: write
     steps:

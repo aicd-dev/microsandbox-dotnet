@@ -37,7 +37,7 @@ jobs:
           newest=$(printf '%s\n%s\n' "$current" "$latest" | sort -V | tail -n 1)
           if [ "$latest" = "$current" ] || [ "$newest" = "$current" ]; then
             echo "update=false" >> "$GITHUB_OUTPUT"
-            echo "Withakay.Microsandbox $current is current (latest stable upstream: $latest)."
+            echo "AICD.Microsandbox $current is current (latest stable upstream: $latest)."
           else
             {
               echo "update=true"
@@ -73,7 +73,7 @@ jobs:
           MICROSANDBOX_FFI_LIBRARY="$PWD/src/Microsandbox/runtimes/linux-x64/native/libmicrosandbox_go_ffi.so" \
             dotnet test Microsandbox.slnx --no-build --no-restore --configuration Release
           dotnet pack src/Microsandbox/Microsandbox.csproj --no-build --no-restore --configuration Release --output artifacts
-          scripts/verify-package.sh "artifacts/Withakay.Microsandbox.${{ steps.version.outputs.latest }}.nupkg" release
+          scripts/verify-package.sh "artifacts/AICD.Microsandbox.${{ steps.version.outputs.latest }}.nupkg" release
       - name: Upload reviewable update
         if: steps.version.outputs.update == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

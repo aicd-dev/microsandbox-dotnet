@@ -26,7 +26,7 @@ jobs:
       - name: Pack and verify managed-only package
         run: |
           dotnet pack src/Microsandbox/Microsandbox.csproj --no-restore --configuration Release --output artifacts -p:IncludeNativeAssets=false -p:RequireNativeAssets=false
-          scripts/verify-package.sh artifacts/Withakay.Microsandbox.*.nupkg managed
+          scripts/verify-package.sh artifacts/AICD.Microsandbox.*.nupkg managed
 
   native-abi:
     name: Native ABI (upstream package release)

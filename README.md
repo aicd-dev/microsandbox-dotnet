@@ -1,7 +1,7 @@
 # microsandbox for .NET
 
 > [!IMPORTANT]
-> `Withakay.Microsandbox` is an unofficial, independently maintained package
+> `AICD.Microsandbox` is an unofficial, independently maintained package
 > and is not an official microsandbox distribution. Its public C# API remains in the
 > `Microsandbox` namespace so consumers can migrate without changing source imports.
 
@@ -105,7 +105,7 @@ back to the next candidate.
 Install the package from NuGet.org:
 
 ```bash
-dotnet add package Withakay.Microsandbox
+dotnet add package AICD.Microsandbox
 ```
 
 ```csharp
@@ -188,8 +188,8 @@ await connected.KillAsync();
 
 ## Publishing
 
-`pack-release` creates `Withakay.Microsandbox.<version>.nupkg`; the assembly is
-also named `Withakay.Microsandbox`, while the source namespace remains
+`pack-release` creates `AICD.Microsandbox.<version>.nupkg`; the assembly is
+also named `AICD.Microsandbox`, while the source namespace remains
 `Microsandbox`.
 
 Tag releases publish through the `publish` job in

@@ -37,7 +37,7 @@ polyfills and `System.Text.Json`, stops first at the four modern `Stream` overri
 `Filesystem.cs`. A complete source inventory identifies additional compatibility work
 after those declarations are made conditional.
 
-The recommended design is a single multi-targeted `Withakay.Microsandbox` package:
+The recommended design is a single multi-targeted `AICD.Microsandbox` package:
 
 ```xml
 <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
@@ -45,7 +45,7 @@ The recommended design is a single multi-targeted `Withakay.Microsandbox` packag
 
 This preserves the current implementation for .NET 8 and later while providing a
 compatibility implementation for older hosts. NuGet selects the best assembly for
-the consuming application. A separate `Withakay.Microsandbox.Core` package is
+the consuming application. A separate `AICD.Microsandbox.Core` package is
 feasible, but it is only justified if contracts need to be consumed independently or
 a second backend is planned.
 
@@ -345,7 +345,7 @@ native ABI.
 ### Option A: replace `net8.0` with `netstandard2.0`
 
 The entire package would contain only
-`lib/netstandard2.0/Withakay.Microsandbox.dll` plus the existing RID assets.
+`lib/netstandard2.0/AICD.Microsandbox.dll` plus the existing RID assets.
 
 Advantages:
 
@@ -368,8 +368,8 @@ This option is feasible but not recommended.
 The package would contain:
 
 ```text
-lib/netstandard2.0/Withakay.Microsandbox.dll
-lib/net8.0/Withakay.Microsandbox.dll
+lib/netstandard2.0/AICD.Microsandbox.dll
+lib/net8.0/AICD.Microsandbox.dll
 runtimes/linux-x64/native/libmicrosandbox_go_ffi.so
 runtimes/linux-arm64/native/libmicrosandbox_go_ffi.so
 runtimes/osx-arm64/native/libmicrosandbox_go_ffi.dylib
@@ -400,9 +400,9 @@ Two interpretations are possible.
 
 #### Contracts-only core
 
-Create `Withakay.Microsandbox.Core` targeting .NET Standard 2.0. Move native-independent
+Create `AICD.Microsandbox.Core` targeting .NET Standard 2.0. Move native-independent
 records, enums, options, events, and result types into it. Keep the current
-`Withakay.Microsandbox` package as the .NET 8 operational SDK containing
+`AICD.Microsandbox` package as the .NET 8 operational SDK containing
 `MicrosandboxClient`, `NativeApi`, services, streams, and native assets. The public
 C# namespace can remain `Microsandbox` in both assemblies.
 
@@ -481,7 +481,7 @@ files, native loading, and filesystem stream declarations.
 
 ## Packaging implications
 
-The package ID can remain `Withakay.Microsandbox`. Multi-targeting adds a second
+The package ID can remain `AICD.Microsandbox`. Multi-targeting adds a second
 managed assembly but does not duplicate native assets. Package size growth should be
 small relative to the native libraries.
 
@@ -492,13 +492,13 @@ the staged native ABI version with `PackageVersion`.
 
 Package inspection must verify:
 
-- Both `lib/netstandard2.0/Withakay.Microsandbox.dll` and
-  `lib/net8.0/Withakay.Microsandbox.dll` are present.
+- Both `lib/netstandard2.0/AICD.Microsandbox.dll` and
+  `lib/net8.0/AICD.Microsandbox.dll` are present.
 - Only the .NET Standard dependency group contains compatibility packages.
 - Each RID asset appears once.
-- A fresh .NET 8 consumer selects `lib/net8.0/Withakay.Microsandbox.dll`.
+- A fresh .NET 8 consumer selects `lib/net8.0/AICD.Microsandbox.dll`.
 - A compatible older consumer selects
-  `lib/netstandard2.0/Withakay.Microsandbox.dll`.
+  `lib/netstandard2.0/AICD.Microsandbox.dll`.
 - RID-specific publish places the correct native library where the loader can find it.
 
 ## Compatibility and support matrix
@@ -628,7 +628,7 @@ versioning, and binary-compatibility costs without solving more than multi-targe
 ## Recommendation
 
 If broader managed compatibility becomes a product requirement, ship one
-multi-targeted `Withakay.Microsandbox` package with `netstandard2.0` and `net8.0`
+multi-targeted `AICD.Microsandbox` package with `netstandard2.0` and `net8.0`
 assets.
 Concentrate compatibility code behind internal helpers, retain the current modern
 implementation for `net8.0`, and describe native support separately from managed TFM
