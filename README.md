@@ -206,10 +206,11 @@ to the `nuget` environment's OIDC-enabled `publish` job, which only publishes it
 
 `.github/workflows/upstream-check.yml` runs weekly and may be dispatched manually.
 It detects the latest stable `superradcompany/microsandbox` release and, when
-newer, validates its assets and opens one package-version update PR. It never
-merges upstream history, commits binaries, merges the PR, tags, or publishes. Its
-read-only job executes the candidate ABI and emits only an updated project file and
-digest allowlist; a separate write-enabled job opens the reviewable PR.
+newer, validates its assets, pushes a package-version update branch, and opens an
+issue with a one-click pull-request link. It never merges upstream history, commits
+binaries, merges the PR, tags, or publishes. Its read-only job executes the
+candidate ABI and emits only an updated project file and digest allowlist; a
+separate write-enabled job pushes the reviewable branch.
 
 NuGet package versions are immutable. Increment `Version` before publishing a
 replacement, and stage native assets from the matching microsandbox release.

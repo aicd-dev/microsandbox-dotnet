@@ -82,14 +82,15 @@ jobs:
           path: upstream-update/
           if-no-files-found: error
 
-  open-pr:
-    name: Open update pull request
+  prepare-update:
+    name: Prepare update branch
     needs: validate
     if: needs.validate.outputs.update == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
+      issues: write
+      pull-requests: read
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -126,7 +127,7 @@ jobs:
             -f "head=${GITHUB_REPOSITORY_OWNER}:${{ needs.validate.outputs.branch }}" \
             --jq length)
           [[ "$count" -eq 0 ]] || echo "exists=true" >> "$GITHUB_OUTPUT"
-      - name: Commit update and open pull request
+      - name: Commit and push update branch
         if: steps.duplicate.outputs.exists != 'true'
         run: |
           branch="${{ needs.validate.outputs.branch }}"
@@ -143,8 +144,14 @@ jobs:
           else
             git push origin "HEAD:refs/heads/$branch"
           fi
-          gh pr create \
-            --base main \
-            --head "$branch" \
-            --title "chore: track upstream v${{ needs.validate.outputs.latest }}" \
-            --body "Updates the package version and reviewed native digest allowlist from ${{ needs.validate.outputs.current }} to ${{ needs.validate.outputs.latest }}. A read-only validation job checksum-validated all five upstream FFI assets, passed managed/native tests, and verified a release-shaped package. No binaries are committed and publishing remains tag-gated."
+      - name: Notify maintainers
+        if: steps.duplicate.outputs.exists != 'true'
+        run: |
+          title="Upstream v${{ needs.validate.outputs.latest }} is ready for review"
+          count=$(gh issue list --state open --search "\"$title\" in:title" --json number --jq length)
+          if [[ "$count" -eq 0 ]]; then
+            compare_url="https://github.com/$GITHUB_REPOSITORY/compare/main...${{ needs.validate.outputs.branch }}?expand=1"
+            gh issue create \
+              --title "$title" \
+              --body "A read-only validation job updated the package version and reviewed native digest allowlist, checksum-validated all five upstream FFI assets, passed managed/native tests, and verified a release-shaped package. [Open the prepared pull request]($compare_url). No binaries are committed and publishing remains tag-gated."
+          fi
