@@ -8,7 +8,7 @@ var sdkDirectory = Directory.GetCurrentDirectory();
 var projectPath = Path.Combine(sdkDirectory, "src", "Microsandbox", "Microsandbox.csproj");
 if (!File.Exists(projectPath))
 {
-    throw new InvalidOperationException("Run this file from the sdk/dotnet directory.");
+    throw new InvalidOperationException("Run this file from the microsandbox-dotnet repository root.");
 }
 
 var platform = CurrentPlatform();

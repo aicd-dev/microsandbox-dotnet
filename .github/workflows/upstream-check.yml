@@ -1,0 +1,150 @@
+name: Check upstream release
+
+on:
+  schedule:
+    - cron: "23 7 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate upstream update
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      update: ${{ steps.version.outputs.update }}
+      current: ${{ steps.version.outputs.current }}
+      latest: ${{ steps.version.outputs.latest }}
+      branch: ${{ steps.version.outputs.branch }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Find latest stable upstream release
+        id: version
+        run: |
+          tag=$(gh api repos/superradcompany/microsandbox/releases \
+            --jq '[.[] | select(.draft == false and .prerelease == false) | .tag_name | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))][0]')
+          [ -n "$tag" ] || { echo "no stable upstream release found" >&2; exit 1; }
+          current=$(sed -n 's#.*<Version>\([^<]*\)</Version>.*#\1#p' src/Microsandbox/Microsandbox.csproj)
+          latest=${tag#v}
+          newest=$(printf '%s\n%s\n' "$current" "$latest" | sort -V | tail -n 1)
+          if [ "$latest" = "$current" ] || [ "$newest" = "$current" ]; then
+            echo "update=false" >> "$GITHUB_OUTPUT"
+            echo "Withakay.Microsandbox $current is current (latest stable upstream: $latest)."
+          else
+            {
+              echo "update=true"
+              echo "current=$current"
+              echo "latest=$latest"
+              echo "branch=automation/update-upstream-$latest"
+            } >> "$GITHUB_OUTPUT"
+          fi
+      - name: Prepare reviewable update files
+        if: steps.version.outputs.update == 'true'
+        run: |
+          install -d upstream-checksums upstream-update
+          gh release download "v${{ steps.version.outputs.latest }}" \
+            --repo superradcompany/microsandbox \
+            --pattern checksums.sha256 \
+            --dir upstream-checksums
+          scripts/create-native-allowlist.sh \
+            upstream-checksums/checksums.sha256 \
+            "${{ steps.version.outputs.latest }}" \
+            upstream-update/native-assets.sha256
+          sed -i "s#<Version>${{ steps.version.outputs.current }}</Version>#<Version>${{ steps.version.outputs.latest }}</Version>#" src/Microsandbox/Microsandbox.csproj
+          cp src/Microsandbox/Microsandbox.csproj upstream-update/Microsandbox.csproj
+      - name: Download and validate candidate native assets
+        if: steps.version.outputs.update == 'true'
+        env:
+          MICROSANDBOX_NATIVE_ALLOWLIST: ${{ github.workspace }}/upstream-update/native-assets.sha256
+        run: scripts/download-native.sh "${{ steps.version.outputs.latest }}"
+      - name: Build, test candidate ABI, and verify package
+        if: steps.version.outputs.update == 'true'
+        run: |
+          dotnet restore Microsandbox.slnx
+          dotnet build Microsandbox.slnx --no-restore --configuration Release
+          MICROSANDBOX_FFI_LIBRARY="$PWD/src/Microsandbox/runtimes/linux-x64/native/libmicrosandbox_go_ffi.so" \
+            dotnet test Microsandbox.slnx --no-build --no-restore --configuration Release
+          dotnet pack src/Microsandbox/Microsandbox.csproj --no-build --no-restore --configuration Release --output artifacts
+          scripts/verify-package.sh "artifacts/Withakay.Microsandbox.${{ steps.version.outputs.latest }}.nupkg" release
+      - name: Upload reviewable update
+        if: steps.version.outputs.update == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: upstream-update
+          path: upstream-update/
+          if-no-files-found: error
+
+  open-pr:
+    name: Open update pull request
+    needs: validate
+    if: needs.validate.outputs.update == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: upstream-update
+          path: upstream-update
+      - name: Validate reviewable text artifact
+        run: |
+          files=(upstream-update/*)
+          [[ ${#files[@]} -eq 2 ]] || { echo "update artifact must contain exactly two files" >&2; exit 1; }
+          [[ -f upstream-update/Microsandbox.csproj && ! -L upstream-update/Microsandbox.csproj ]]
+          [[ -f upstream-update/native-assets.sha256 && ! -L upstream-update/native-assets.sha256 ]]
+          candidate_version=$(sed -n 's#.*<Version>\([^<]*\)</Version>.*#\1#p' upstream-update/Microsandbox.csproj)
+          [[ "$candidate_version" == "${{ needs.validate.outputs.latest }}" ]]
+          sed "s#<Version>${{ needs.validate.outputs.latest }}</Version>#<Version>${{ needs.validate.outputs.current }}</Version>#" \
+            upstream-update/Microsandbox.csproj | cmp - src/Microsandbox/Microsandbox.csproj
+          [[ "$(sed -n 's/^version \([^[:space:]]*\)$/\1/p' upstream-update/native-assets.sha256)" == "${{ needs.validate.outputs.latest }}" ]]
+          [[ "$(grep -Ec '^[[:xdigit:]]{64}[[:space:]]+' upstream-update/native-assets.sha256)" -eq 5 ]]
+          for asset in \
+            libmicrosandbox_go_ffi-darwin-arm64.dylib \
+            libmicrosandbox_go_ffi-linux-amd64.so \
+            libmicrosandbox_go_ffi-linux-arm64.so \
+            libmicrosandbox_go_ffi-windows-amd64.dll \
+            libmicrosandbox_go_ffi-windows-arm64.dll; do
+            [[ "$(grep -Ec "^[[:xdigit:]]{64}[[:space:]]+$asset$" upstream-update/native-assets.sha256)" -eq 1 ]]
+          done
+      - name: Avoid duplicate pull requests
+        id: duplicate
+        run: |
+          count=$(gh api --method GET "repos/$GITHUB_REPOSITORY/pulls" \
+            -f state=open \
+            -f "head=${GITHUB_REPOSITORY_OWNER}:${{ needs.validate.outputs.branch }}" \
+            --jq length)
+          [[ "$count" -eq 0 ]] || echo "exists=true" >> "$GITHUB_OUTPUT"
+      - name: Commit update and open pull request
+        if: steps.duplicate.outputs.exists != 'true'
+        run: |
+          branch="${{ needs.validate.outputs.branch }}"
+          cp upstream-update/Microsandbox.csproj src/Microsandbox/Microsandbox.csproj
+          cp upstream-update/native-assets.sha256 native-assets.sha256
+          git checkout -b "$branch"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/Microsandbox/Microsandbox.csproj native-assets.sha256
+          git commit -m "chore: track upstream v${{ needs.validate.outputs.latest }}"
+          remote_sha=$(git ls-remote --heads origin "refs/heads/$branch" | cut -f1)
+          if [[ -n "$remote_sha" ]]; then
+            git push --force-with-lease="refs/heads/$branch:$remote_sha" origin "HEAD:refs/heads/$branch"
+          else
+            git push origin "HEAD:refs/heads/$branch"
+          fi
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "chore: track upstream v${{ needs.validate.outputs.latest }}" \
+            --body "Updates the package version and reviewed native digest allowlist from ${{ needs.validate.outputs.current }} to ${{ needs.validate.outputs.latest }}. A read-only validation job checksum-validated all five upstream FFI assets, passed managed/native tests, and verified a release-shaped package. No binaries are committed and publishing remains tag-gated."

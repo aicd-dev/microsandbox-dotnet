@@ -37,9 +37,9 @@ run = "dotnet pack src/Microsandbox/Microsandbox.csproj --no-restore --output ar
 description = "Alias for pack-local"
 depends = ["pack-local"]
 
-[tasks.stage-native]
-description = "Stage the five Go release assets into NuGet RID directories"
-run = "./scripts/stage-native.sh"
+[tasks.native-download]
+description = "Download, verify, and stage all five upstream FFI release assets"
+run = "./scripts/download-native.sh"
 
 [tasks.pack-release]
 description = "Create a NuGet package containing all supported native RID assets"
@@ -54,18 +54,15 @@ test -n "$package" || { echo "no package found under artifacts" >&2; exit 1; }
 unzip -l "$package"
 '''
 
-[tasks.native-build]
-description = "Build the existing Rust C ABI used by the Go SDK"
-run = "cargo build --release --manifest-path ../go/native/Cargo.toml"
-
-[tasks.test-native]
-description = "Build the C ABI and verify it through .NET"
-depends = ["native-build", "build"]
+[tasks.native-test]
+description = "Download the release FFI assets and verify the current-platform ABI through .NET"
+depends = ["native-download", "build"]
 run = '''
-case "$(uname -s)" in
-  Darwin) library="$(pwd)/../../target/release/libmicrosandbox_go_ffi.dylib" ;;
-  Linux) library="$(pwd)/../../target/release/libmicrosandbox_go_ffi.so" ;;
-  *) echo "test-native currently supports macOS and Linux" >&2; exit 1 ;;
+case "$(uname -s)-$(uname -m)" in
+  Darwin-arm64) library="$PWD/src/Microsandbox/runtimes/osx-arm64/native/libmicrosandbox_go_ffi.dylib" ;;
+  Linux-x86_64) library="$PWD/src/Microsandbox/runtimes/linux-x64/native/libmicrosandbox_go_ffi.so" ;;
+  Linux-aarch64|Linux-arm64) library="$PWD/src/Microsandbox/runtimes/linux-arm64/native/libmicrosandbox_go_ffi.so" ;;
+  *) echo "native-test supports macOS arm64 and Linux x64/arm64" >&2; exit 1 ;;
 esac
 MICROSANDBOX_FFI_LIBRARY="$library" dotnet test Microsandbox.slnx --no-build --no-restore
 '''

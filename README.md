@@ -1,11 +1,11 @@
 # microsandbox for .NET
 
 > [!IMPORTANT]
-> `Withakay.Microsandbox` is currently an unofficial package and is not an
-> official microsandbox distribution. Its public C# API remains in the
+> `Withakay.Microsandbox` is an unofficial, independently maintained package
+> and is not an official microsandbox distribution. Its public C# API remains in the
 > `Microsandbox` namespace so consumers can migrate without changing source imports.
 
-.NET SDK targeting .NET 8 over the same native C ABI used by the Go SDK. It covers
+.NET SDK targeting .NET 8 over microsandbox's native C ABI. It covers
 native loading, creation and detached creation, collected and streaming command execution,
 name-addressed lookup and lifecycle operations, cancellation, and explicit
 native handle ownership.
@@ -34,7 +34,6 @@ rooting alone does not prevent symlink traversal outside a volume root.
 [mise](https://mise.jdx.dev/) pins .NET 10 and provides the local workflow:
 
 ```bash
-cd sdk/dotnet
 mise install
 mise run check
 ```
@@ -48,10 +47,12 @@ source .runtime/env.sh
 dotnet run --file examples/basic.cs -p:Version="$MICROSANDBOX_RELEASE_VERSION"
 ```
 
-Build the Rust C ABI and exercise native loading from TUnit:
+Download the current package version's five prebuilt FFI assets from the
+`superradcompany/microsandbox` GitHub release, validate them, and exercise the
+current platform binary from TUnit:
 
 ```bash
-mise run test-native
+mise run native-test
 ```
 
 Create a managed-only development package:
@@ -65,23 +66,28 @@ Ordinary `dotnet pack` is release-shaped: it requires and includes all five nati
 runtime assets. Use `mise run pack-local` only when an explicit managed-only package
 is needed for local development.
 
-For a release-shaped package, download or copy the five Go release assets and
-the release's `checksums.sha256` into one directory, then stage and validate them:
+For a release-shaped package, download all five upstream FFI assets and the
+release's `checksums.sha256`, then validate and stage them:
 
 ```bash
-mise run stage-native -- /path/to/release-assets RELEASE_VERSION
+mise run native-download
 mise run pack-release
 mise run inspect
 ```
 
-`stage-native` maps the Linux x64/arm64, macOS arm64, and Windows x64/arm64
+`native-download` uses `gh release download` in GitHub Actions and portable
+`curl` locally. It fetches an exact tag and fixed asset list, then `stage-native.sh`
+maps the Linux x64/arm64, macOS arm64, and Windows x64/arm64
 release filenames to canonical libraries under `runtimes/<rid>/native`. It verifies
-every SHA-256 checksum and platform binary header before transactionally replacing
+every SHA-256 against both the upstream checksum manifest and the version-bound,
+reviewed `native-assets.sha256` allowlist. It also validates each binary's format and
+target architecture before transactionally replacing
 the staged runtime tree and recording the source release version. `pack-release`
-requires that version to match the NuGet
-package version; override both when preparing a different release with
-`-p:PackageVersion=...` and the matching `stage-native` version argument.
-Staged binaries and packages are ignored by git.
+requires the staged native, NuGet package, and managed assembly versions to match.
+To adopt another release, update the project `Version` and reviewed
+`native-assets.sha256` together before running `scripts/download-native.sh VERSION`.
+Native binaries come from upstream release assets, are checksum-validated, and
+are never committed here. Staged binaries and packages are ignored by git.
 
 The SDK resolves the native library in this order:
 
@@ -186,21 +192,24 @@ await connected.KillAsync();
 also named `Withakay.Microsandbox`, while the source namespace remains
 `Microsandbox`.
 
-Tag releases publish through the `nuget-publish` job in
+Tag releases publish through the `publish` job in
 `.github/workflows/release.yml`. The job uses GitHub OIDC to obtain a temporary
 NuGet.org API key, so no long-lived API key is stored in GitHub. The matching
 trusted publishing policy on NuGet.org must use repository owner
-`withakay`, repository `microsandbox`, workflow `release.yml`, and GitHub
+`aicd-dev`, repository `microsandbox-dotnet`, workflow `release.yml`, and GitHub
 environment `nuget`. Set the `NUGET_USER` variable on that environment to the
 NuGet.org username that owns the policy.
 
-`.github/workflows/nightly-upstream.yml` runs nightly and may also be dispatched
-manually. It merges the latest stable `superradcompany/microsandbox` release tag
-into this fork's `main` branch. If the matching `Withakay.Microsandbox` version
-does not exist on NuGet.org, it downloads the upstream release assets, validates
-their checksums and native ABI, runs the .NET tests, and publishes that exact
-version. Add a second NuGet.org trusted publishing policy with the same owner,
-repository, and `nuget` environment, but workflow `nightly-upstream.yml`.
+The release workflow's read-only `package` job is the only job that downloads or
+executes native code. It transfers the verified NuGet package as an Actions artifact
+to the `nuget` environment's OIDC-enabled `publish` job, which only publishes it.
+
+`.github/workflows/upstream-check.yml` runs weekly and may be dispatched manually.
+It detects the latest stable `superradcompany/microsandbox` release and, when
+newer, validates its assets and opens one package-version update PR. It never
+merges upstream history, commits binaries, merges the PR, tags, or publishes. Its
+read-only job executes the candidate ABI and emits only an updated project file and
+digest allowlist; a separate write-enabled job opens the reviewable PR.
 
 NuGet package versions are immutable. Increment `Version` before publishing a
 replacement, and stage native assets from the matching microsandbox release.

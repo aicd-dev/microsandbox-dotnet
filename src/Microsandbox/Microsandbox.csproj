@@ -9,13 +9,12 @@
     <PackageId>Withakay.Microsandbox</PackageId>
     <AssemblyName>Withakay.Microsandbox</AssemblyName>
     <Version>0.6.8</Version>
-    <PackageVersion Condition="'$(PackageVersion)' == ''">$(Version)</PackageVersion>
     <Title>Unofficial microsandbox SDK for .NET</Title>
     <Authors>Withakay</Authors>
-    <Description>Unofficial .NET SDK for microsandbox with RID-specific native runtime assets. This package is not an official microsandbox distribution.</Description>
+    <Description>Unofficial, independently maintained .NET SDK for microsandbox with RID-specific native runtime assets. This package is not an official microsandbox distribution.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageTags>microsandbox;sandbox;virtual-machine;vm</PackageTags>
-    <RepositoryUrl>https://github.com/withakay/microsandbox</RepositoryUrl>
+    <RepositoryUrl>https://github.com/aicd-dev/microsandbox-dotnet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <IncludeNativeAssets Condition="'$(IncludeNativeAssets)' == ''">true</IncludeNativeAssets>
@@ -26,6 +25,7 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Microsandbox.Tests" />
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(IncludeNativeAssets)' == 'true'">
@@ -33,6 +33,11 @@
           Pack="true"
           PackagePath="runtimes/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
+
+  <Target Name="ValidatePackageVersion" BeforeTargets="GenerateNuspec">
+    <Error Condition="'$(PackageVersion)' != '$(Version)'"
+           Text="PackageVersion must match Version because the managed assembly and native ABI versions must be identical. Set Version in the project before packaging." />
+  </Target>
 
   <Target Name="ValidateNativeAssets" BeforeTargets="GenerateNuspec" Condition="'$(RequireNativeAssets)' == 'true'">
     <ItemGroup>
@@ -44,9 +49,9 @@
       <MissingNativeAsset Include="@(RequiredNativeAsset)" Condition="!Exists('%(Identity)')" />
     </ItemGroup>
     <Error Condition="'@(MissingNativeAsset)' != ''"
-           Text="Missing required native runtime assets: @(MissingNativeAsset, ', '). Run 'mise run stage-native -- RELEASE_ASSET_DIR RELEASE_VERSION'." />
+           Text="Missing required native runtime assets: @(MissingNativeAsset, ', '). Run 'mise run native-download' or stage an existing download with './scripts/stage-native.sh RELEASE_ASSET_DIR RELEASE_VERSION'." />
     <Error Condition="!Exists('$(NativeAssetsRoot)/release-version.txt')"
-           Text="Missing native asset release manifest. Run 'mise run stage-native -- RELEASE_ASSET_DIR RELEASE_VERSION'." />
+           Text="Missing native asset release manifest. Run 'mise run native-download' or stage an existing download with './scripts/stage-native.sh RELEASE_ASSET_DIR RELEASE_VERSION'." />
     <ReadLinesFromFile File="$(NativeAssetsRoot)/release-version.txt"
                        Condition="Exists('$(NativeAssetsRoot)/release-version.txt')">
       <Output TaskParameter="Lines" ItemName="StagedNativeReleaseVersion" />

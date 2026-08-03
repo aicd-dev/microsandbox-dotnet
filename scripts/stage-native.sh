@@ -12,11 +12,11 @@ target_dir=${3:-"$(cd "$(dirname "$0")/.." && pwd)/src/Microsandbox/runtimes"}
 checksum_file="$source_dir/checksums.sha256"
 
 assets=(
-  "libmicrosandbox_go_ffi-linux-amd64.so|linux-x64|libmicrosandbox_go_ffi.so|elf"
-  "libmicrosandbox_go_ffi-linux-arm64.so|linux-arm64|libmicrosandbox_go_ffi.so|elf"
-  "libmicrosandbox_go_ffi-darwin-arm64.dylib|osx-arm64|libmicrosandbox_go_ffi.dylib|macho"
-  "libmicrosandbox_go_ffi-windows-amd64.dll|win-x64|microsandbox_go_ffi.dll|mz"
-  "libmicrosandbox_go_ffi-windows-arm64.dll|win-arm64|microsandbox_go_ffi.dll|mz"
+  "libmicrosandbox_go_ffi-linux-amd64.so|linux-x64|libmicrosandbox_go_ffi.so|elf|x64"
+  "libmicrosandbox_go_ffi-linux-arm64.so|linux-arm64|libmicrosandbox_go_ffi.so|elf|arm64"
+  "libmicrosandbox_go_ffi-darwin-arm64.dylib|osx-arm64|libmicrosandbox_go_ffi.dylib|macho|arm64"
+  "libmicrosandbox_go_ffi-windows-amd64.dll|win-x64|microsandbox_go_ffi.dll|pe|x64"
+  "libmicrosandbox_go_ffi-windows-arm64.dll|win-arm64|microsandbox_go_ffi.dll|pe|arm64"
 )
 
 if [[ ! -f "$checksum_file" ]]; then
@@ -58,24 +58,52 @@ expected_hash() {
   printf '%s\n' "$found"
 }
 
-validate_magic() {
+read_bytes() {
+  od -An -tx1 -j "$2" -N "$3" "$1" | tr -d '[:space:]'
+}
+
+little_endian_u32() {
+  local bytes=$1
+  printf '%d\n' "0x${bytes:6:2}${bytes:4:2}${bytes:2:2}${bytes:0:2}"
+}
+
+validate_binary() {
   local path=$1
   local format=$2
-  local magic
-  magic=$(od -An -tx1 -N4 "$path" | tr -d '[:space:]')
-  case "$format:$magic" in
-    elf:7f454c46) ;;
-    macho:feedface|macho:feedfacf|macho:cefaedfe|macho:cffaedfe|macho:cafebabe|macho:bebafeca|macho:cafebabf|macho:bfbafeca) ;;
-    mz:4d5a*) ;;
-    *)
-      echo "invalid $format binary magic: $path" >&2
-      return 1
+  local architecture=$3
+  local magic machine pe_offset
+  magic=$(read_bytes "$path" 0 4)
+  case "$format" in
+    elf)
+      [[ "$magic" == 7f454c46 ]] || { echo "invalid ELF binary magic: $path" >&2; return 1; }
+      [[ "$(read_bytes "$path" 4 2)" == 0201 ]] || { echo "ELF must be 64-bit little-endian: $path" >&2; return 1; }
+      machine=$(read_bytes "$path" 18 2)
+      case "$architecture:$machine" in
+        x64:3e00|arm64:b700) ;;
+        *) echo "ELF architecture mismatch for $architecture: $path" >&2; return 1 ;;
+      esac
       ;;
+    macho)
+      [[ "$magic" == cffaedfe ]] || { echo "Mach-O must be a little-endian 64-bit image: $path" >&2; return 1; }
+      machine=$(read_bytes "$path" 4 4)
+      [[ "$architecture:$machine" == arm64:0c000001 ]] || { echo "Mach-O architecture mismatch for $architecture: $path" >&2; return 1; }
+      ;;
+    pe)
+      [[ "${magic:0:4}" == 4d5a ]] || { echo "invalid PE DOS header: $path" >&2; return 1; }
+      pe_offset=$(little_endian_u32 "$(read_bytes "$path" 60 4)")
+      [[ "$(read_bytes "$path" "$pe_offset" 4)" == 50450000 ]] || { echo "invalid PE signature: $path" >&2; return 1; }
+      machine=$(read_bytes "$path" "$((pe_offset + 4))" 2)
+      case "$architecture:$machine" in
+        x64:6486|arm64:64aa) ;;
+        *) echo "PE architecture mismatch for $architecture: $path" >&2; return 1 ;;
+      esac
+      ;;
+    *) echo "unknown binary format $format: $path" >&2; return 1 ;;
   esac
 }
 
 for mapping in "${assets[@]}"; do
-  IFS='|' read -r asset rid canonical format <<< "$mapping"
+  IFS='|' read -r asset rid canonical format architecture <<< "$mapping"
   source_path="$source_dir/$asset"
   if [[ ! -f "$source_path" ]]; then
     echo "missing release asset: $source_path" >&2
@@ -88,7 +116,7 @@ for mapping in "${assets[@]}"; do
     echo "checksum mismatch for $source_path" >&2
     exit 1
   fi
-  validate_magic "$source_path" "$format"
+  validate_binary "$source_path" "$format" "$architecture"
 done
 
 target_parent=$(dirname "$target_dir")
@@ -108,7 +136,7 @@ cleanup() {
 trap cleanup EXIT HUP INT TERM
 
 for mapping in "${assets[@]}"; do
-  IFS='|' read -r asset rid canonical format <<< "$mapping"
+  IFS='|' read -r asset rid canonical format architecture <<< "$mapping"
   install -d "$temp_dir/$rid/native"
   install -m 0644 "$source_dir/$asset" "$temp_dir/$rid/native/$canonical"
 done

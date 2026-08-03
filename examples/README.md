@@ -1,6 +1,6 @@
 # .NET examples
 
-These examples reinterpret some of the Go SDK examples as [.NET 10 file-based apps](https://learn.microsoft.com/dotnet/csharp/fundamentals/tutorials/file-based-programs)
+These standalone SDK examples are [.NET 10 file-based apps](https://learn.microsoft.com/dotnet/csharp/fundamentals/tutorials/file-based-programs).
 Each source file references the local SDK through a `#:project` directive.
 
 
@@ -29,7 +29,7 @@ dotnet --version
 
 ### Quick start with release binaries
 
-From `sdk/dotnet`, download the latest release, verify its checksums, and load
+From the repository root, download the latest release, verify its checksums, and load
 the generated environment file. The version property compiles the checkout's
 managed SDK against that exact native release:
 
@@ -48,7 +48,7 @@ dotnet run --file examples/basic.cs -p:Version=$env:MICROSANDBOX_RELEASE_VERSION
 ```
 
 This downloads `msb`, `libkrunfw`, and the native FFI library into the ignored
-`sdk/dotnet/.runtime` directory. It does not require Rust, Docker, `just`, or a
+`.runtime` directory. It does not require Rust, Go, Docker, `just`, or a
 native build toolchain.
 
 Run any example directly with the .NET CLI:
@@ -66,22 +66,22 @@ dotnet run --file examples/secrets.cs -p:Version="$MICROSANDBOX_RELEASE_VERSION"
 dotnet run --file examples/patches.cs -p:Version="$MICROSANDBOX_RELEASE_VERSION"
 ```
 
-### Build the runtime from source
+### Use the packaged FFI runtime
 
-When working from a source checkout, [build the repository's native C ABI](../README.md#development) first,
-then point the example at it. `MICROSANDBOX_MSB_PATH` is optional when `msb` is
-already discoverable:
+This repository does not build native code from source. `mise run native-download`
+downloads and checksum-validates the five upstream release binaries. NuGet consumers
+resolve their RID asset automatically; source-checkout examples can point at a staged
+current-platform binary. `MICROSANDBOX_MSB_PATH` is optional when `msb` is discoverable:
 
 ```bash
-export MICROSANDBOX_FFI_LIBRARY="$(git rev-parse --show-toplevel)/target/release/libmicrosandbox_go_ffi.dylib" # macOS
-export MICROSANDBOX_MSB_PATH="$(git rev-parse --show-toplevel)/build/msb"
+mise run native-download
+export MICROSANDBOX_FFI_LIBRARY="$PWD/src/Microsandbox/runtimes/osx-arm64/native/libmicrosandbox_go_ffi.dylib" # macOS arm64
 
 dotnet run --file examples/basic.cs
 ```
 
-On Linux, use `libmicrosandbox_go_ffi.so`. A packaged SDK resolves its native
-RID asset automatically, so consumers do not normally set
-`MICROSANDBOX_FFI_LIBRARY`.
+On Linux, use the staged `linux-x64` or `linux-arm64` `.so`. The prebuilt assets
+come from `superradcompany/microsandbox` releases and are not committed here.
 
 Build every example without running a VM:
 

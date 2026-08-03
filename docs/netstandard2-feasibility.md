@@ -6,7 +6,7 @@ This document evaluates whether the .NET SDK can support .NET Standard 2.0 witho
 discarding the existing .NET 8 implementation. It is a design study, not an
 implementation plan approved for release.
 
-The assessment covers only `sdk/dotnet`. It assumes that the SDK continues to call
+The assessment covers this standalone repository. It assumes that the SDK continues to call
 the native C ABI shipped by Microsandbox and that the NuGet package continues to
 carry the five currently supported native assets:
 
@@ -461,7 +461,7 @@ This design should not be undertaken solely to add .NET Standard support.
 For the recommended multi-target design:
 
 ```text
-sdk/dotnet/src/Microsandbox/
+src/Microsandbox/
 ├── Compatibility/
 │   ├── CompilerAttributes.cs
 │   ├── Guard.cs
