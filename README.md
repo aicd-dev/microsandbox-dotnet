@@ -2,8 +2,7 @@
 
 > [!IMPORTANT]
 > `AICD.Microsandbox` is an unofficial, independently maintained package
-> and is not an official microsandbox distribution. Its public C# API remains in the
-> `Microsandbox` namespace so consumers can migrate without changing source imports.
+> and is not an official microsandbox distribution. 
 
 .NET SDK targeting .NET 8 over microsandbox's native C ABI. It covers
 native loading, creation and detached creation, collected and streaming command execution,
