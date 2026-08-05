@@ -13,29 +13,47 @@ Sandbox? sandbox = null;
 
 try
 {
-    sandbox = await client.CreateAsync(name, new SandboxOptions
-    {
-        Image = "alpine:3.20",
-        Secrets =
-        [
-            new SandboxSecretOptions
-            {
-                EnvironmentVariable = environmentVariable,
-                Value = secretValue,
-                AllowedHosts = ["api.example.com"],
-                Placeholder = placeholder,
-            },
-        ],
-    }, cancellationToken);
+    sandbox = await client.CreateAsync(
+        name,
+        new SandboxOptions
+        {
+            Image = "alpine:3.20",
+            Secrets =
+            [
+                new SandboxSecretOptions
+                {
+                    EnvironmentVariable = environmentVariable,
+                    Value = secretValue,
+                    AllowedHosts = ["api.example.com"],
+                    Placeholder = placeholder,
+                },
+            ],
+        },
+        cancellationToken
+    );
 
-    var visible = await sandbox.ShellAsync($"printenv {environmentVariable}; true", cancellationToken);
-    Require(!visible.StandardOutput.Contains(secretValue), "secret value leaked into the guest environment");
-    Require(visible.StandardOutput.Contains(placeholder), "guest did not receive the secret placeholder");
+    var visible = await sandbox.ShellAsync(
+        $"printenv {environmentVariable}; true",
+        cancellationToken
+    );
+    Require(
+        !visible.StandardOutput.Contains(secretValue),
+        "secret value leaked into the guest environment"
+    );
+    Require(
+        visible.StandardOutput.Contains(placeholder),
+        "guest did not receive the secret placeholder"
+    );
     Console.WriteLine($"  guest sees placeholder: {visible.StandardOutput.Trim()}");
 
     var environment = await sandbox.ShellAsync("env", cancellationToken);
-    Require(!environment.StandardOutput.Contains(secretValue), "secret value appeared in the full environment");
-    Console.WriteLine($"  scanned {environment.StandardOutput.Length} environment bytes without exposing the secret");
+    Require(
+        !environment.StandardOutput.Contains(secretValue),
+        "secret value appeared in the full environment"
+    );
+    Console.WriteLine(
+        $"  scanned {environment.StandardOutput.Length} environment bytes without exposing the secret"
+    );
     Console.WriteLine("Secrets example passed.");
 }
 finally
@@ -53,17 +71,29 @@ static MicrosandboxClient LoadClient()
 {
     var client = MicrosandboxClient.Load();
     var msbPath = Environment.GetEnvironmentVariable("MICROSANDBOX_MSB_PATH");
-    if (!string.IsNullOrWhiteSpace(msbPath)) client.SetMsbPath(msbPath);
+    if (!string.IsNullOrWhiteSpace(msbPath))
+    {
+        client.SetMsbPath(msbPath);
+    }
     return client;
 }
 
 static void Require(bool condition, string message)
 {
-    if (!condition) throw new InvalidOperationException(message);
+    if (!condition)
+    {
+        throw new InvalidOperationException(message);
+    }
 }
 
 static async Task BestEffort(Func<Task> action)
 {
-    try { await action(); }
-    catch (Exception exception) { Console.Error.WriteLine($"cleanup: {exception.Message}"); }
+    try
+    {
+        await action();
+    }
+    catch (Exception exception)
+    {
+        Console.Error.WriteLine($"cleanup: {exception.Message}");
+    }
 }

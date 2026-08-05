@@ -17,15 +17,20 @@ Sandbox? sandbox = null;
 try
 {
     Console.WriteLine($"Publishing host port {hostPort} to guest port {guestPort}...");
-    sandbox = await client.CreateAsync(name, new SandboxOptions
-    {
-        Image = "alpine:3.20",
-        Ports = new Dictionary<ushort, ushort> { [hostPort] = guestPort },
-    }, cancellationToken);
+    sandbox = await client.CreateAsync(
+        name,
+        new SandboxOptions
+        {
+            Image = "alpine:3.20",
+            Ports = new Dictionary<ushort, ushort> { [hostPort] = guestPort },
+        },
+        cancellationToken
+    );
 
     await using var command = await sandbox.ShellStreamingAsync(
         $"printf '{payload}' | nc -l -p {guestPort}",
-        cancellationToken: cancellationToken);
+        cancellationToken: cancellationToken
+    );
 
     using var connection = await ConnectWithRetry("127.0.0.1", hostPort, cancellationToken);
     var buffer = new byte[Encoding.UTF8.GetByteCount(payload)];
@@ -58,7 +63,11 @@ static ushort ReserveHostPort()
     return port;
 }
 
-static async Task<TcpClient> ConnectWithRetry(string host, ushort port, CancellationToken cancellationToken)
+static async Task<TcpClient> ConnectWithRetry(
+    string host,
+    ushort port,
+    CancellationToken cancellationToken
+)
 {
     Exception? lastError = null;
     for (var attempt = 0; attempt < 20; attempt++)
@@ -89,17 +98,29 @@ static MicrosandboxClient LoadClient()
 {
     var client = MicrosandboxClient.Load();
     var msbPath = Environment.GetEnvironmentVariable("MICROSANDBOX_MSB_PATH");
-    if (!string.IsNullOrWhiteSpace(msbPath)) client.SetMsbPath(msbPath);
+    if (!string.IsNullOrWhiteSpace(msbPath))
+    {
+        client.SetMsbPath(msbPath);
+    }
     return client;
 }
 
 static void Require(bool condition, string message)
 {
-    if (!condition) throw new InvalidOperationException(message);
+    if (!condition)
+    {
+        throw new InvalidOperationException(message);
+    }
 }
 
 static async Task BestEffort(Func<Task> action)
 {
-    try { await action(); }
-    catch (Exception exception) { Console.Error.WriteLine($"cleanup: {exception.Message}"); }
+    try
+    {
+        await action();
+    }
+    catch (Exception exception)
+    {
+        Console.Error.WriteLine($"cleanup: {exception.Message}");
+    }
 }

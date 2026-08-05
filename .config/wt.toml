@@ -1,0 +1,6 @@
+# Keep Worktrunk merges aligned with ordinary Git commits and CI.
+[pre-commit]
+format = "bash scripts/pre-commit-hook.sh"
+
+[pre-merge]
+check = "mise run check"

@@ -8,8 +8,10 @@ public enum ModificationPolicy
 {
     /// <summary>Applies only changes that can complete without restarting.</summary>
     NoRestart,
+
     /// <summary>Persists changes for the next start without changing a running VM.</summary>
     NextStart,
+
     /// <summary>Restarts the sandbox when restart-required changes are present.</summary>
     Restart,
 }
@@ -32,12 +34,15 @@ public sealed record SandboxModificationOptions
     internal string ToJson()
     {
         Patch.Validate();
-        return JsonSerializer.Serialize(new ModificationRequest
-        {
-            Patch = Patch.ToWire(),
-            Policy = Policy,
-            DryRun = DryRun,
-        }, JsonDefaults.Options);
+        return JsonSerializer.Serialize(
+            new ModificationRequest
+            {
+                Patch = Patch.ToWire(),
+                Policy = Policy,
+                DryRun = DryRun,
+            },
+            JsonDefaults.Options
+        );
     }
 
     private sealed record ModificationRequest
@@ -92,46 +97,68 @@ public sealed record SandboxModificationPatch
     /// <summary>Gets secret names to remove.</summary>
     public IReadOnlyList<string>? SecretsRemove { get; init; }
 
-    internal object ToWire() => new PatchWire
-    {
-        CPUs = CPUs,
-        MaxCPUs = MaxCPUs,
-        MemoryMiB = MemoryMiB,
-        MaxMemoryMiB = MaxMemoryMiB,
-        RootDiskSizeMiB = RootDiskSizeMiB,
-        Environment = Environment?.OrderBy(item => item.Key, StringComparer.Ordinal)
-            .Select(item => new EnvironmentWire(item.Key, item.Value)).ToArray(),
-        EnvironmentRemove = EnvironmentRemove,
-        Labels = Labels?.OrderBy(item => item.Key, StringComparer.Ordinal)
-            .Select(item => new[] { item.Key, item.Value }).ToArray(),
-        LabelsRemove = LabelsRemove,
-        Workdir = Workdir,
-        Secrets = Secrets?.OrderBy(item => item.Key, StringComparer.Ordinal)
-            .Select(item => item.Value.ToWire(item.Key)).ToArray(),
-        SecretsRemove = SecretsRemove,
-    };
+    internal object ToWire() =>
+        new PatchWire
+        {
+            CPUs = CPUs,
+            MaxCPUs = MaxCPUs,
+            MemoryMiB = MemoryMiB,
+            MaxMemoryMiB = MaxMemoryMiB,
+            RootDiskSizeMiB = RootDiskSizeMiB,
+            Environment = Environment
+                ?.OrderBy(item => item.Key, StringComparer.Ordinal)
+                .Select(item => new EnvironmentWire(item.Key, item.Value))
+                .ToArray(),
+            EnvironmentRemove = EnvironmentRemove,
+            Labels = Labels
+                ?.OrderBy(item => item.Key, StringComparer.Ordinal)
+                .Select(item => new[] { item.Key, item.Value })
+                .ToArray(),
+            LabelsRemove = LabelsRemove,
+            Workdir = Workdir,
+            Secrets = Secrets
+                ?.OrderBy(item => item.Key, StringComparer.Ordinal)
+                .Select(item => item.Value.ToWire(item.Key))
+                .ToArray(),
+            SecretsRemove = SecretsRemove,
+        };
 
     internal void Validate()
     {
         if (CPUs == 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(CPUs), "CPU count must be greater than zero.");
+            throw new ArgumentOutOfRangeException(
+                nameof(CPUs),
+                "CPU count must be greater than zero."
+            );
         }
         if (MaxCPUs == 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(MaxCPUs), "Maximum CPU count must be greater than zero.");
+            throw new ArgumentOutOfRangeException(
+                nameof(MaxCPUs),
+                "Maximum CPU count must be greater than zero."
+            );
         }
         if (MemoryMiB == 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(MemoryMiB), "Memory must be greater than zero.");
+            throw new ArgumentOutOfRangeException(
+                nameof(MemoryMiB),
+                "Memory must be greater than zero."
+            );
         }
         if (MaxMemoryMiB == 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(MaxMemoryMiB), "Maximum memory must be greater than zero.");
+            throw new ArgumentOutOfRangeException(
+                nameof(MaxMemoryMiB),
+                "Maximum memory must be greater than zero."
+            );
         }
         if (RootDiskSizeMiB == 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(RootDiskSizeMiB), "Root disk size must be greater than zero.");
+            throw new ArgumentOutOfRangeException(
+                nameof(RootDiskSizeMiB),
+                "Root disk size must be greater than zero."
+            );
         }
 
         if (Secrets is not null)
@@ -148,33 +175,45 @@ public sealed record SandboxModificationPatch
     {
         [JsonPropertyName("cpus")]
         public byte? CPUs { get; init; }
+
         [JsonPropertyName("max_cpus")]
         public byte? MaxCPUs { get; init; }
+
         [JsonPropertyName("memory_mib")]
         public uint? MemoryMiB { get; init; }
+
         [JsonPropertyName("max_memory_mib")]
         public uint? MaxMemoryMiB { get; init; }
+
         [JsonPropertyName("root_disk_size_mib")]
         public uint? RootDiskSizeMiB { get; init; }
+
         [JsonPropertyName("env")]
         public IReadOnlyList<EnvironmentWire>? Environment { get; init; }
+
         [JsonPropertyName("env_remove")]
         public IReadOnlyList<string>? EnvironmentRemove { get; init; }
+
         [JsonPropertyName("labels")]
         public IReadOnlyList<IReadOnlyList<string>>? Labels { get; init; }
+
         [JsonPropertyName("labels_remove")]
         public IReadOnlyList<string>? LabelsRemove { get; init; }
+
         [JsonPropertyName("workdir")]
         public string? Workdir { get; init; }
+
         [JsonPropertyName("secrets")]
         public IReadOnlyList<object>? Secrets { get; init; }
+
         [JsonPropertyName("secrets_remove")]
         public IReadOnlyList<string>? SecretsRemove { get; init; }
     }
 
     private sealed record EnvironmentWire(
         [property: JsonPropertyName("key")] string Key,
-        [property: JsonPropertyName("value")] string Value);
+        [property: JsonPropertyName("value")] string Value
+    );
 }
 
 /// <summary>Describes the desired state of one modified secret.</summary>
@@ -195,29 +234,33 @@ public sealed record SandboxSecretModification
     /// <summary>Gets desired allowed host patterns.</summary>
     public IReadOnlyList<string>? AllowedHosts { get; init; }
 
-    internal object ToWire(string name) => new SecretWire
-    {
-        Name = name,
-        Source = !string.IsNullOrEmpty(EnvironmentVariable)
-            ? new SourceWire { Kind = "env", Variable = EnvironmentVariable }
-            : !string.IsNullOrEmpty(StoreReference)
-                ? new SourceWire { Kind = "store", Reference = StoreReference }
+    internal object ToWire(string name) =>
+        new SecretWire
+        {
+            Name = name,
+            Source =
+                !string.IsNullOrEmpty(EnvironmentVariable)
+                    ? new SourceWire { Kind = "env", Variable = EnvironmentVariable }
+                : !string.IsNullOrEmpty(StoreReference)
+                    ? new SourceWire { Kind = "store", Reference = StoreReference }
                 : null,
-        Value = string.IsNullOrEmpty(Value) ? null : Value,
-        Placeholder = string.IsNullOrEmpty(Placeholder) ? null : Placeholder,
-        AllowedHosts = AllowedHosts,
-    };
+            Value = string.IsNullOrEmpty(Value) ? null : Value,
+            Placeholder = string.IsNullOrEmpty(Placeholder) ? null : Placeholder,
+            AllowedHosts = AllowedHosts,
+        };
 
     internal void Validate(string name)
     {
-        var sources = (string.IsNullOrEmpty(EnvironmentVariable) ? 0 : 1)
+        var sources =
+            (string.IsNullOrEmpty(EnvironmentVariable) ? 0 : 1)
             + (string.IsNullOrEmpty(Value) ? 0 : 1)
             + (string.IsNullOrEmpty(StoreReference) ? 0 : 1);
         if (sources > 1)
         {
             throw new ArgumentException(
                 $"Secret '{name}' environment variable, value, and store reference are mutually exclusive.",
-                nameof(name));
+                nameof(name)
+            );
         }
     }
 
@@ -225,12 +268,16 @@ public sealed record SandboxSecretModification
     {
         [JsonPropertyName("name")]
         public required string Name { get; init; }
+
         [JsonPropertyName("source")]
         public SourceWire? Source { get; init; }
+
         [JsonPropertyName("value")]
         public string? Value { get; init; }
+
         [JsonPropertyName("placeholder")]
         public string? Placeholder { get; init; }
+
         [JsonPropertyName("allowed_hosts")]
         public IReadOnlyList<string>? AllowedHosts { get; init; }
     }
@@ -239,8 +286,10 @@ public sealed record SandboxSecretModification
     {
         [JsonPropertyName("kind")]
         public required string Kind { get; init; }
+
         [JsonPropertyName("var")]
         public string? Variable { get; init; }
+
         [JsonPropertyName("reference")]
         public string? Reference { get; init; }
     }
@@ -283,7 +332,9 @@ public sealed record SandboxModificationPlan
 
     internal static SandboxModificationPlan Parse(string json) =>
         JsonSerializer.Deserialize<SandboxModificationPlan>(json, JsonDefaults.Options)
-        ?? throw new InvalidDataException("The native ABI returned an empty sandbox modification plan.");
+        ?? throw new InvalidDataException(
+            "The native ABI returned an empty sandbox modification plan."
+        );
 }
 
 /// <summary>Contains one planned config or secret change.</summary>
@@ -292,33 +343,43 @@ public sealed record SandboxPlannedChange
     /// <summary>Gets <c>config</c> or <c>secret</c>.</summary>
     [JsonPropertyName("kind")]
     public required string Kind { get; init; }
+
     /// <summary>Gets the modified field.</summary>
     [JsonPropertyName("field")]
     public required string Field { get; init; }
+
     /// <summary>Gets the secret name for secret changes.</summary>
     [JsonPropertyName("name")]
     public string? Name { get; init; }
+
     /// <summary>Gets the natural change classification.</summary>
     [JsonPropertyName("change")]
     public required string Change { get; init; }
+
     /// <summary>Gets the previous visible config state.</summary>
     [JsonPropertyName("before")]
     public string? Before { get; init; }
+
     /// <summary>Gets the desired visible config state.</summary>
     [JsonPropertyName("after")]
     public string? After { get; init; }
+
     /// <summary>Gets the previous guest-visible secret reference.</summary>
     [JsonPropertyName("before_ref")]
     public string? BeforeReference { get; init; }
+
     /// <summary>Gets the desired guest-visible secret reference.</summary>
     [JsonPropertyName("after_ref")]
     public string? AfterReference { get; init; }
+
     /// <summary>Gets when or whether the change can take effect.</summary>
     [JsonPropertyName("disposition")]
     public required string Disposition { get; init; }
+
     /// <summary>Gets allowed hosts after a secret change.</summary>
     [JsonPropertyName("allow_hosts")]
     public IReadOnlyList<string> AllowedHosts { get; init; } = [];
+
     /// <summary>Gets a human-readable classification reason.</summary>
     [JsonPropertyName("reason")]
     public string? Reason { get; init; }
@@ -327,7 +388,8 @@ public sealed record SandboxPlannedChange
 /// <summary>Contains a field-associated modification conflict or warning.</summary>
 public sealed record SandboxModificationMessage(
     [property: JsonPropertyName("field")] string Field,
-    [property: JsonPropertyName("message")] string Message);
+    [property: JsonPropertyName("message")] string Message
+);
 
 /// <summary>Reports convergence for one live resource resize.</summary>
 public sealed record SandboxResourceResizeStatus(
@@ -335,4 +397,5 @@ public sealed record SandboxResourceResizeStatus(
     [property: JsonPropertyName("requested")] string Requested,
     [property: JsonPropertyName("actual")] string Actual,
     [property: JsonPropertyName("enforced")] string Enforced,
-    [property: JsonPropertyName("state")] string State);
+    [property: JsonPropertyName("state")] string State
+);

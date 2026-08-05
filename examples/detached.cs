@@ -12,11 +12,11 @@ var detached = false;
 
 try
 {
-    sandbox = await client.CreateAsync(name, new SandboxOptions
-    {
-        Image = "alpine:3.20",
-        Detached = true,
-    }, cancellationToken);
+    sandbox = await client.CreateAsync(
+        name,
+        new SandboxOptions { Image = "alpine:3.20", Detached = true },
+        cancellationToken
+    );
 
     Console.WriteLine($"Initial handle owns lifecycle: {sandbox.OwnsLifecycle}");
     await sandbox.ShellAsync("echo lived-through-detach > /tmp/witness", cancellationToken);
@@ -25,7 +25,8 @@ try
     Console.WriteLine("Detached local handle; VM remains running.");
 
     var persisted = await client.ListAsync(cancellationToken: cancellationToken);
-    var handle = persisted.SingleOrDefault(candidate => candidate.Name == name)
+    var handle =
+        persisted.SingleOrDefault(candidate => candidate.Name == name)
         ?? throw new InvalidOperationException("detached sandbox was not listed");
     Console.WriteLine($"Persisted status: {handle.Status}");
 
@@ -63,17 +64,29 @@ static MicrosandboxClient LoadClient()
 {
     var client = MicrosandboxClient.Load();
     var msbPath = Environment.GetEnvironmentVariable("MICROSANDBOX_MSB_PATH");
-    if (!string.IsNullOrWhiteSpace(msbPath)) client.SetMsbPath(msbPath);
+    if (!string.IsNullOrWhiteSpace(msbPath))
+    {
+        client.SetMsbPath(msbPath);
+    }
     return client;
 }
 
 static void Require(bool condition, string message)
 {
-    if (!condition) throw new InvalidOperationException(message);
+    if (!condition)
+    {
+        throw new InvalidOperationException(message);
+    }
 }
 
 static async Task BestEffort(Func<Task> action)
 {
-    try { await action(); }
-    catch (Exception exception) { Console.Error.WriteLine($"cleanup: {exception.Message}"); }
+    try
+    {
+        await action();
+    }
+    catch (Exception exception)
+    {
+        Console.Error.WriteLine($"cleanup: {exception.Message}");
+    }
 }

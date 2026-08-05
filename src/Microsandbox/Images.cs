@@ -9,17 +9,25 @@ public sealed class ImageService
 
     internal ImageService(NativeApi native) => _native = native;
 
-    public Task<ImageInfo> GetAsync(string reference, CancellationToken cancellationToken = default) =>
-        _native.GetImageAsync(Required(reference), cancellationToken);
+    public Task<ImageInfo> GetAsync(
+        string reference,
+        CancellationToken cancellationToken = default
+    ) => _native.GetImageAsync(Required(reference), cancellationToken);
 
-    public Task<IReadOnlyList<ImageInfo>> ListAsync(CancellationToken cancellationToken = default) =>
-        _native.ListImagesAsync(cancellationToken);
+    public Task<IReadOnlyList<ImageInfo>> ListAsync(
+        CancellationToken cancellationToken = default
+    ) => _native.ListImagesAsync(cancellationToken);
 
-    public Task<ImageDetail> InspectAsync(string reference, CancellationToken cancellationToken = default) =>
-        _native.InspectImageAsync(Required(reference), cancellationToken);
+    public Task<ImageDetail> InspectAsync(
+        string reference,
+        CancellationToken cancellationToken = default
+    ) => _native.InspectImageAsync(Required(reference), cancellationToken);
 
-    public Task RemoveAsync(string reference, bool force = false, CancellationToken cancellationToken = default) =>
-        _native.RemoveImageAsync(Required(reference), force, cancellationToken);
+    public Task RemoveAsync(
+        string reference,
+        bool force = false,
+        CancellationToken cancellationToken = default
+    ) => _native.RemoveImageAsync(Required(reference), force, cancellationToken);
 
     public Task<ImagePruneReport> PruneAsync(CancellationToken cancellationToken = default) =>
         _native.PruneImagesAsync(cancellationToken);
@@ -27,24 +35,28 @@ public sealed class ImageService
     public Task<IReadOnlyList<ImageInfo>> LoadAsync(
         string inputPath,
         IReadOnlyList<string>? tags = null,
-        CancellationToken cancellationToken = default) =>
+        CancellationToken cancellationToken = default
+    ) =>
         _native.LoadImagesAsync(
             Required(inputPath),
             JsonSerializer.Serialize(tags ?? Array.Empty<string>(), JsonDefaults.Options),
-            cancellationToken);
+            cancellationToken
+        );
 
     public Task SaveAsync(
         IReadOnlyList<string> references,
         string outputPath,
         ImageArchiveFormat format = ImageArchiveFormat.Docker,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(references);
         return _native.SaveImagesAsync(
             JsonSerializer.Serialize(references, JsonDefaults.Options),
             Required(outputPath),
             format == ImageArchiveFormat.Oci ? "oci" : "docker",
-            cancellationToken);
+            cancellationToken
+        );
     }
 
     private static string Required(string value)
@@ -86,8 +98,10 @@ public class ImageInfo
     [JsonPropertyName("last_used_at_unix")]
     public long? LastUsedAtUnix { get; init; }
 
-    public DateTimeOffset? CreatedAt => CreatedAtUnix is { } value ? DateTimeOffset.FromUnixTimeSeconds(value) : null;
-    public DateTimeOffset? LastUsedAt => LastUsedAtUnix is { } value ? DateTimeOffset.FromUnixTimeSeconds(value) : null;
+    public DateTimeOffset? CreatedAt =>
+        CreatedAtUnix is { } value ? DateTimeOffset.FromUnixTimeSeconds(value) : null;
+    public DateTimeOffset? LastUsedAt =>
+        LastUsedAtUnix is { } value ? DateTimeOffset.FromUnixTimeSeconds(value) : null;
 }
 
 public sealed class ImageDetail : ImageInfo
@@ -107,7 +121,8 @@ public sealed record ImageConfig(
     [property: JsonPropertyName("working_dir")] string WorkingDirectory,
     [property: JsonPropertyName("user")] string User,
     [property: JsonPropertyName("labels")] IReadOnlyDictionary<string, string> Labels,
-    [property: JsonPropertyName("stop_signal")] string StopSignal);
+    [property: JsonPropertyName("stop_signal")] string StopSignal
+);
 
 public sealed record ImageLayer(
     [property: JsonPropertyName("diff_id")] string DiffId,
@@ -115,7 +130,8 @@ public sealed record ImageLayer(
     [property: JsonPropertyName("media_type")] string MediaType,
     [property: JsonPropertyName("compressed_size_bytes")] long? CompressedSizeBytes,
     [property: JsonPropertyName("erofs_size_bytes")] long? ErofsSizeBytes,
-    [property: JsonPropertyName("position")] int Position);
+    [property: JsonPropertyName("position")] int Position
+);
 
 public sealed record ImagePruneReport(
     [property: JsonPropertyName("image_refs_removed")] uint ImageReferencesRemoved,
@@ -123,4 +139,5 @@ public sealed record ImagePruneReport(
     [property: JsonPropertyName("layers_removed")] uint LayersRemoved,
     [property: JsonPropertyName("fsmeta_removed")] uint FilesystemMetadataRemoved,
     [property: JsonPropertyName("vmdk_removed")] uint VmdkRemoved,
-    [property: JsonPropertyName("bytes_reclaimed")] ulong? BytesReclaimed);
+    [property: JsonPropertyName("bytes_reclaimed")] ulong? BytesReclaimed
+);

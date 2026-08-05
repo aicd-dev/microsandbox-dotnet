@@ -8,16 +8,22 @@ public enum SandboxStatus
 {
     /// <summary>The sandbox record has been created.</summary>
     Created,
+
     /// <summary>The sandbox is starting.</summary>
     Starting,
+
     /// <summary>The sandbox is running.</summary>
     Running,
+
     /// <summary>The sandbox is draining.</summary>
     Draining,
+
     /// <summary>The sandbox is paused.</summary>
     Paused,
+
     /// <summary>The sandbox stopped normally.</summary>
     Stopped,
+
     /// <summary>The sandbox process crashed.</summary>
     Crashed,
 }
@@ -28,7 +34,8 @@ public sealed record SandboxFilter
     /// <summary>Gets labels that every returned sandbox must match.</summary>
     public IReadOnlyDictionary<string, string>? Labels { get; init; }
 
-    internal string ToJson() => JsonSerializer.Serialize(new FilterPayload { Labels = Labels }, JsonDefaults.Options);
+    internal string ToJson() =>
+        JsonSerializer.Serialize(new FilterPayload { Labels = Labels }, JsonDefaults.Options);
 
     private sealed record FilterPayload
     {
@@ -44,7 +51,8 @@ public sealed record SandboxStopResult(
     int? ExitCode,
     int? Signal,
     DateTimeOffset ObservedAt,
-    string? Source);
+    string? Source
+);
 
 /// <summary>Describes a successful agent reachability check.</summary>
 public sealed record SandboxPingResult(string Name, TimeSpan Latency);
@@ -58,9 +66,11 @@ public sealed record SandboxInitOptions
     /// <summary>Gets the init command.</summary>
     [JsonPropertyName("cmd")]
     public required string Command { get; init; }
+
     /// <summary>Gets init command arguments.</summary>
     [JsonPropertyName("args")]
     public IReadOnlyList<string>? Arguments { get; init; }
+
     /// <summary>Gets init environment entries as key/value pairs.</summary>
     [JsonPropertyName("env")]
     public IReadOnlyList<IReadOnlyList<string>>? Environment { get; init; }

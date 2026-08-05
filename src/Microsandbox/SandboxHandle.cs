@@ -15,8 +15,10 @@ public sealed class SandboxHandle
 
     /// <summary>Gets the latest metadata captured for this handle.</summary>
     public SandboxMetadata Metadata { get; }
+
     /// <summary>Gets the sandbox name.</summary>
     public string Name => Metadata.Name;
+
     /// <summary>Gets the last-known lifecycle status.</summary>
     public SandboxStatus Status => Metadata.Status;
 
@@ -37,16 +39,20 @@ public sealed class SandboxHandle
         _native.StartAsync(Name, true, cancellationToken);
 
     /// <summary>Gracefully stops the sandbox by name.</summary>
-    public Task StopAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
-        _native.StopByNameAsync(Name, StopTimeoutMilliseconds(timeout), cancellationToken);
+    public Task StopAsync(
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default
+    ) => _native.StopByNameAsync(Name, StopTimeoutMilliseconds(timeout), cancellationToken);
 
     /// <summary>Requests graceful shutdown by name and returns after the request is sent.</summary>
     public Task RequestStopAsync(CancellationToken cancellationToken = default) =>
         _native.RequestStopByNameAsync(Name, cancellationToken);
 
     /// <summary>Force-kills the sandbox by name.</summary>
-    public Task KillAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
-        _native.KillByNameAsync(Name, KillTimeoutMilliseconds(timeout), cancellationToken);
+    public Task KillAsync(
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default
+    ) => _native.KillByNameAsync(Name, KillTimeoutMilliseconds(timeout), cancellationToken);
 
     /// <summary>Requests immediate termination by name and returns after the request is sent.</summary>
     public Task RequestKillAsync(CancellationToken cancellationToken = default) =>
@@ -57,8 +63,9 @@ public sealed class SandboxHandle
         _native.RequestDrainByNameAsync(Name, cancellationToken);
 
     /// <summary>Waits until the sandbox reaches a terminal state.</summary>
-    public Task<SandboxStopResult> WaitUntilStoppedAsync(CancellationToken cancellationToken = default) =>
-        _native.WaitUntilStoppedByNameAsync(Name, cancellationToken);
+    public Task<SandboxStopResult> WaitUntilStoppedAsync(
+        CancellationToken cancellationToken = default
+    ) => _native.WaitUntilStoppedByNameAsync(Name, cancellationToken);
 
     /// <summary>Checks agent reachability without refreshing idle activity.</summary>
     public Task<SandboxPingResult> PingAsync(CancellationToken cancellationToken = default) =>
@@ -71,28 +78,35 @@ public sealed class SandboxHandle
     /// <summary>Plans or applies a modification by persisted sandbox name.</summary>
     public async Task<SandboxModificationPlan> ModifyAsync(
         SandboxModificationOptions options,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(options);
-        var json = await _native.ModifyByNameAsync(Name, options.ToJson(), cancellationToken).ConfigureAwait(false);
+        var json = await _native
+            .ModifyByNameAsync(Name, options.ToJson(), cancellationToken)
+            .ConfigureAwait(false);
         return SandboxModificationPlan.Parse(json);
     }
 
     /// <summary>Reads persisted sandbox logs into memory without requiring a live handle.</summary>
     public Task<IReadOnlyList<LogEntry>> LogsAsync(
         LogOptions? options = null,
-        CancellationToken cancellationToken = default) =>
-        _native.LogsByNameAsync(Name, (options ?? new LogOptions()).ToJson(), cancellationToken);
+        CancellationToken cancellationToken = default
+    ) => _native.LogsByNameAsync(Name, (options ?? new LogOptions()).ToJson(), cancellationToken);
 
     /// <summary>Starts a persisted log stream without requiring a live handle.</summary>
     public async Task<LogStream> LogStreamAsync(
         LogStreamOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
-        var handle = await _native.LogStreamByNameAsync(
-            Name,
-            (options ?? new LogStreamOptions()).ToJson(),
-            cancellationToken).ConfigureAwait(false);
+        var handle = await _native
+            .LogStreamByNameAsync(
+                Name,
+                (options ?? new LogStreamOptions()).ToJson(),
+                cancellationToken
+            )
+            .ConfigureAwait(false);
         return new LogStream(_native, handle);
     }
 
@@ -103,7 +117,8 @@ public sealed class SandboxHandle
     /// <summary>Creates a named snapshot without opening a live sandbox handle.</summary>
     public Task<SnapshotArtifact> SnapshotAsync(
         string snapshotName,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(snapshotName);
         return _native.SnapshotByNameAsync(Name, snapshotName, cancellationToken);
@@ -137,4 +152,5 @@ public sealed record SandboxMetadata(
     SandboxStatus Status,
     string ConfigJson,
     DateTimeOffset? CreatedAt,
-    DateTimeOffset? UpdatedAt);
+    DateTimeOffset? UpdatedAt
+);

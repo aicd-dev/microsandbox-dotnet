@@ -1,19 +1,28 @@
 [tools]
-dotnet = "10"
+dotnet = "10.0.302"
 
 [tasks.restore]
 description = "Restore .NET SDK dependencies"
-run = "dotnet restore Microsandbox.slnx"
+run = "dotnet tool restore && dotnet restore Microsandbox.slnx"
 
 [tasks.build]
 description = "Build the .NET SDK"
 depends = ["restore"]
-run = "dotnet build Microsandbox.slnx --no-restore"
+run = "dotnet build Microsandbox.slnx --no-restore --configuration Release"
 
 [tasks.test]
 description = "Run the TUnit test suite"
 depends = ["build"]
-run = "dotnet test Microsandbox.slnx --no-build --no-restore"
+run = "dotnet test Microsandbox.slnx --no-build --no-restore --configuration Release"
+
+[tasks.format-check]
+description = "Verify C# and .NET formatting"
+depends = ["restore"]
+run = "dotnet csharpier check . && dotnet format Microsandbox.slnx --verify-no-changes --no-restore"
+
+[tasks.hooks-install]
+description = "Install prek Git hooks"
+run = "git config core.hooksPath .githooks"
 
 [tasks.examples-build]
 description = "Build all .NET 10 file-based app examples"
@@ -69,4 +78,4 @@ MICROSANDBOX_FFI_LIBRARY="$library" dotnet test Microsandbox.slnx --no-build --n
 
 [tasks.check]
 description = "Build and test the .NET SDK"
-depends = ["test", "examples-build"]
+depends = ["test", "examples-build", "format-check"]

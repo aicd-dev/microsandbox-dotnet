@@ -11,11 +11,17 @@ Sandbox? sandbox = null;
 
 try
 {
-    sandbox = await client.CreateAsync(name, new SandboxOptions { Image = "alpine:3.20" }, cancellationToken);
+    sandbox = await client.CreateAsync(
+        name,
+        new SandboxOptions { Image = "alpine:3.20" },
+        cancellationToken
+    );
     var filesystem = sandbox.Filesystem;
 
     await filesystem.WriteStringAsync("/tmp/note.txt", "hello\n", cancellationToken);
-    Console.WriteLine($"  note: {(await filesystem.ReadStringAsync("/tmp/note.txt", cancellationToken)).Trim()}");
+    Console.WriteLine(
+        $"  note: {(await filesystem.ReadStringAsync("/tmp/note.txt", cancellationToken)).Trim()}"
+    );
 
     await filesystem.MkdirAsync("/tmp/work/data", cancellationToken);
     await filesystem.WriteStringAsync("/tmp/work/data/a.txt", "alpha", cancellationToken);
@@ -27,8 +33,14 @@ try
     }
 
     await filesystem.CopyAsync("/tmp/work/data/a.txt", "/tmp/work/data/a.copy", cancellationToken);
-    await filesystem.RenameAsync("/tmp/work/data/b.txt", "/tmp/work/data/b.renamed", cancellationToken);
-    Console.WriteLine($"  copy exists: {await filesystem.ExistsAsync("/tmp/work/data/a.copy", cancellationToken)}");
+    await filesystem.RenameAsync(
+        "/tmp/work/data/b.txt",
+        "/tmp/work/data/b.renamed",
+        cancellationToken
+    );
+    Console.WriteLine(
+        $"  copy exists: {await filesystem.ExistsAsync("/tmp/work/data/a.copy", cancellationToken)}"
+    );
 
     var hostDirectory = Directory.CreateTempSubdirectory("dotnet-sdk-fs-");
     try
@@ -38,14 +50,19 @@ try
         await File.WriteAllTextAsync(source, "round-tripped through a microVM", cancellationToken);
         await filesystem.CopyFromHostAsync(source, "/tmp/from-host.txt", cancellationToken);
         await filesystem.CopyToHostAsync("/tmp/from-host.txt", destination, cancellationToken);
-        Console.WriteLine($"  host round trip: {await File.ReadAllTextAsync(destination, cancellationToken)}");
+        Console.WriteLine(
+            $"  host round trip: {await File.ReadAllTextAsync(destination, cancellationToken)}"
+        );
     }
     finally
     {
         hostDirectory.Delete(recursive: true);
     }
 
-    await sandbox.ShellAsync("dd if=/dev/zero of=/tmp/big.bin bs=1M count=2 status=none", cancellationToken);
+    await sandbox.ShellAsync(
+        "dd if=/dev/zero of=/tmp/big.bin bs=1M count=2 status=none",
+        cancellationToken
+    );
     await using (var input = await filesystem.ReadStreamAsync("/tmp/big.bin", cancellationToken))
     {
         var sink = new MemoryStream();
@@ -53,7 +70,9 @@ try
         Console.WriteLine($"  streamed read: {sink.Length} bytes");
     }
 
-    await using (var output = await filesystem.WriteStreamAsync("/tmp/composed.txt", cancellationToken))
+    await using (
+        var output = await filesystem.WriteStreamAsync("/tmp/composed.txt", cancellationToken)
+    )
     {
         foreach (var chunk in new[] { "alpha;", "beta;", "gamma;" })
         {
@@ -61,7 +80,9 @@ try
         }
     }
 
-    Console.WriteLine($"  streamed write: {await filesystem.ReadStringAsync("/tmp/composed.txt", cancellationToken)}");
+    Console.WriteLine(
+        $"  streamed write: {await filesystem.ReadStringAsync("/tmp/composed.txt", cancellationToken)}"
+    );
     await filesystem.RemoveDirAsync("/tmp/work", cancellationToken);
     Console.WriteLine("Filesystem example passed.");
 }
@@ -80,12 +101,21 @@ static MicrosandboxClient LoadClient()
 {
     var client = MicrosandboxClient.Load();
     var msbPath = Environment.GetEnvironmentVariable("MICROSANDBOX_MSB_PATH");
-    if (!string.IsNullOrWhiteSpace(msbPath)) client.SetMsbPath(msbPath);
+    if (!string.IsNullOrWhiteSpace(msbPath))
+    {
+        client.SetMsbPath(msbPath);
+    }
     return client;
 }
 
 static async Task BestEffort(Func<Task> action)
 {
-    try { await action(); }
-    catch (Exception exception) { Console.Error.WriteLine($"cleanup: {exception.Message}"); }
+    try
+    {
+        await action();
+    }
+    catch (Exception exception)
+    {
+        Console.Error.WriteLine($"cleanup: {exception.Message}");
+    }
 }

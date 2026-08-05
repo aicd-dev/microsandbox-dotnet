@@ -8,7 +8,9 @@ var sdkDirectory = Directory.GetCurrentDirectory();
 var projectPath = Path.Combine(sdkDirectory, "src", "Microsandbox", "Microsandbox.csproj");
 if (!File.Exists(projectPath))
 {
-    throw new InvalidOperationException("Run this file from the microsandbox-dotnet repository root.");
+    throw new InvalidOperationException(
+        "Run this file from the microsandbox-dotnet repository root."
+    );
 }
 
 var platform = CurrentPlatform();
@@ -23,9 +25,11 @@ try
     http.DefaultRequestHeaders.UserAgent.ParseAdd("microsandbox-dotnet-examples");
 
     var releaseJson = await http.GetByteArrayAsync(
-        "https://api.github.com/repos/superradcompany/microsandbox/releases/latest");
+        "https://api.github.com/repos/superradcompany/microsandbox/releases/latest"
+    );
     using var release = JsonDocument.Parse(releaseJson);
-    var tag = release.RootElement.GetProperty("tag_name").GetString()
+    var tag =
+        release.RootElement.GetProperty("tag_name").GetString()
         ?? throw new InvalidDataException("Latest GitHub release did not contain tag_name");
     var version = tag.TrimStart('v');
     var releaseBase = $"https://github.com/superradcompany/microsandbox/releases/download/{tag}";
@@ -56,17 +60,26 @@ try
 
     if (!OperatingSystem.IsWindows())
     {
-        File.SetUnixFileMode(msbPath,
-            UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
-            UnixFileMode.GroupRead | UnixFileMode.GroupExecute |
-            UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
+        File.SetUnixFileMode(
+            msbPath,
+            UnixFileMode.UserRead
+                | UnixFileMode.UserWrite
+                | UnixFileMode.UserExecute
+                | UnixFileMode.GroupRead
+                | UnixFileMode.GroupExecute
+                | UnixFileMode.OtherRead
+                | UnixFileMode.OtherExecute
+        );
         CreateKrunfwLinks(temporaryDirectory);
     }
 
     var finalMsbPath = Path.Combine(runtimeDirectory, platform.MsbFilename);
     var finalFfiPath = Path.Combine(runtimeDirectory, ffiName);
     WriteEnvironmentFiles(temporaryDirectory, finalMsbPath, finalFfiPath, version);
-    await File.WriteAllTextAsync(Path.Combine(temporaryDirectory, "version"), version + Environment.NewLine);
+    await File.WriteAllTextAsync(
+        Path.Combine(temporaryDirectory, "version"),
+        version + Environment.NewLine
+    );
 
     if (Directory.Exists(runtimeDirectory))
     {
@@ -98,14 +111,16 @@ try
         }
         catch (Exception exception)
         {
-            Console.Error.WriteLine($"Warning: could not remove previous runtime at {backupDirectory}: {exception.Message}");
+            Console.Error.WriteLine(
+                $"Warning: could not remove previous runtime at {backupDirectory}: {exception.Message}"
+            );
         }
     }
 
     Console.WriteLine("Release runtime downloaded and checksums verified.");
-    Console.WriteLine(OperatingSystem.IsWindows()
-        ? @"Next: . .\.runtime\env.ps1"
-        : "Next: source .runtime/env.sh");
+    Console.WriteLine(
+        OperatingSystem.IsWindows() ? @"Next: . .\.runtime\env.ps1" : "Next: source .runtime/env.sh"
+    );
 }
 finally
 {
@@ -127,27 +142,42 @@ static PlatformAssets CurrentPlatform()
     {
         var releaseArchitecture = architecture == Architecture.X64 ? "x86_64" : "aarch64";
         var ffiArchitecture = architecture == Architecture.X64 ? "amd64" : "arm64";
-        return new($"linux-{releaseArchitecture}", $"linux-{ffiArchitecture}", "tar.gz", "so", "msb");
+        return new(
+            $"linux-{releaseArchitecture}",
+            $"linux-{ffiArchitecture}",
+            "tar.gz",
+            "so",
+            "msb"
+        );
     }
 
     if (OperatingSystem.IsWindows() && architecture is Architecture.X64 or Architecture.Arm64)
     {
         var releaseArchitecture = architecture == Architecture.X64 ? "x86_64" : "aarch64";
         var ffiArchitecture = architecture == Architecture.X64 ? "amd64" : "arm64";
-        return new($"windows-{releaseArchitecture}", $"windows-{ffiArchitecture}", "zip", "dll", "msb.exe");
+        return new(
+            $"windows-{releaseArchitecture}",
+            $"windows-{ffiArchitecture}",
+            "zip",
+            "dll",
+            "msb.exe"
+        );
     }
 
-    throw new PlatformNotSupportedException($"Unsupported platform: {RuntimeInformation.OSDescription} {architecture}");
+    throw new PlatformNotSupportedException(
+        $"Unsupported platform: {RuntimeInformation.OSDescription} {architecture}"
+    );
 }
 
 static void VerifyChecksum(string filename, byte[] content, string manifest)
 {
-    var expected = manifest
-        .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-        .Select(line => line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
-        .Where(parts => parts.Length >= 2 && parts[1].TrimStart('*') == filename)
-        .Select(parts => parts[0])
-        .SingleOrDefault()
+    var expected =
+        manifest
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(line => line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
+            .Where(parts => parts.Length >= 2 && parts[1].TrimStart('*') == filename)
+            .Select(parts => parts[0])
+            .SingleOrDefault()
         ?? throw new InvalidDataException($"checksums.sha256 did not contain {filename}");
     var actual = Convert.ToHexStringLower(SHA256.HashData(content));
     if (!string.Equals(actual, expected, StringComparison.OrdinalIgnoreCase))
@@ -187,13 +217,17 @@ static void ExtractBundle(byte[] bundle, string extension, string destination)
 
 static void CreateKrunfwLinks(string directory)
 {
-    var libraries = Directory.GetFiles(directory, "libkrunfw*")
+    var libraries = Directory
+        .GetFiles(directory, "libkrunfw*")
         .Select(Path.GetFileName)
         .OfType<string>()
         .ToArray();
     if (OperatingSystem.IsMacOS())
     {
-        var library = libraries.Single(name => name.StartsWith("libkrunfw.", StringComparison.Ordinal) && name.EndsWith(".dylib", StringComparison.Ordinal));
+        var library = libraries.Single(name =>
+            name.StartsWith("libkrunfw.", StringComparison.Ordinal)
+            && name.EndsWith(".dylib", StringComparison.Ordinal)
+        );
         File.CreateSymbolicLink(Path.Combine(directory, "libkrunfw.dylib"), library);
         return;
     }
@@ -210,14 +244,18 @@ static void WriteEnvironmentFiles(string directory, string msbPath, string ffiPa
     static string ShellQuote(string value) => $"'{value.Replace("'", "'\"'\"'")}'";
     static string PowerShellQuote(string value) => $"'{value.Replace("'", "''")}'";
 
-    File.WriteAllText(Path.Combine(directory, "env.sh"),
-        $"export MICROSANDBOX_MSB_PATH={ShellQuote(msbPath)}\n" +
-        $"export MICROSANDBOX_FFI_LIBRARY={ShellQuote(ffiPath)}\n" +
-        $"export MICROSANDBOX_RELEASE_VERSION={ShellQuote(version)}\n");
-    File.WriteAllText(Path.Combine(directory, "env.ps1"),
-        $"$env:MICROSANDBOX_MSB_PATH = {PowerShellQuote(msbPath)}\n" +
-        $"$env:MICROSANDBOX_FFI_LIBRARY = {PowerShellQuote(ffiPath)}\n" +
-        $"$env:MICROSANDBOX_RELEASE_VERSION = {PowerShellQuote(version)}\n");
+    File.WriteAllText(
+        Path.Combine(directory, "env.sh"),
+        $"export MICROSANDBOX_MSB_PATH={ShellQuote(msbPath)}\n"
+            + $"export MICROSANDBOX_FFI_LIBRARY={ShellQuote(ffiPath)}\n"
+            + $"export MICROSANDBOX_RELEASE_VERSION={ShellQuote(version)}\n"
+    );
+    File.WriteAllText(
+        Path.Combine(directory, "env.ps1"),
+        $"$env:MICROSANDBOX_MSB_PATH = {PowerShellQuote(msbPath)}\n"
+            + $"$env:MICROSANDBOX_FFI_LIBRARY = {PowerShellQuote(ffiPath)}\n"
+            + $"$env:MICROSANDBOX_RELEASE_VERSION = {PowerShellQuote(version)}\n"
+    );
 }
 
 internal sealed record PlatformAssets(
@@ -225,4 +263,5 @@ internal sealed record PlatformAssets(
     string FfiTarget,
     string BundleExtension,
     string FfiExtension,
-    string MsbFilename);
+    string MsbFilename
+);

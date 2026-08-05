@@ -19,24 +19,32 @@ public sealed class SandboxSsh
     /// <summary>Opens an SSH client connected to the sandbox.</summary>
     public async Task<SshClient> OpenClientAsync(
         SshClientOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
-        var handle = await _native.SshConnectAsync(
-            _sandbox.GetHandle(),
-            (options ?? new SshClientOptions()).ToJson(),
-            cancellationToken).ConfigureAwait(false);
+        var handle = await _native
+            .SshConnectAsync(
+                _sandbox.GetHandle(),
+                (options ?? new SshClientOptions()).ToJson(),
+                cancellationToken
+            )
+            .ConfigureAwait(false);
         return new SshClient(_native, handle);
     }
 
     /// <summary>Prepares a reusable SSH server endpoint for the sandbox.</summary>
     public async Task<SshServer> PrepareServerAsync(
         SshServerOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
-        var handle = await _native.SshServerAsync(
-            _sandbox.GetHandle(),
-            (options ?? new SshServerOptions()).ToJson(),
-            cancellationToken).ConfigureAwait(false);
+        var handle = await _native
+            .SshServerAsync(
+                _sandbox.GetHandle(),
+                (options ?? new SshServerOptions()).ToJson(),
+                cancellationToken
+            )
+            .ConfigureAwait(false);
         return new SshServer(_native, handle);
     }
 }
@@ -134,29 +142,35 @@ public sealed class SshClient : IAsyncDisposable
     public Task<SshOutput> ExecuteAsync(
         string command,
         SshExecOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(command);
         return _native.SshClientExecAsync(
             GetHandle(),
             command,
             (options ?? new SshExecOptions()).ToJson(),
-            cancellationToken);
+            cancellationToken
+        );
     }
 
     /// <summary>Bridges the process console to an interactive SSH shell until it exits or detaches.</summary>
     public Task<int> AttachConsoleAsync(
         SshAttachOptions? options = null,
-        CancellationToken cancellationToken = default) =>
+        CancellationToken cancellationToken = default
+    ) =>
         _native.SshClientAttachAsync(
             GetHandle(),
             (options ?? new SshAttachOptions()).ToJson(),
-            cancellationToken);
+            cancellationToken
+        );
 
     /// <summary>Opens an SFTP session over this SSH connection.</summary>
     public async Task<SftpClient> OpenSftpAsync(CancellationToken cancellationToken = default)
     {
-        var handle = await _native.SshClientSftpAsync(GetHandle(), cancellationToken).ConfigureAwait(false);
+        var handle = await _native
+            .SshClientSftpAsync(GetHandle(), cancellationToken)
+            .ConfigureAwait(false);
         return new SftpClient(_native, handle);
     }
 
@@ -165,7 +179,8 @@ public sealed class SshClient : IAsyncDisposable
         _state.CloseAsync(_native.SshClientCloseAsync, cancellationToken);
 
     /// <inheritdoc />
-    public async ValueTask DisposeAsync() => await CloseAsync(CancellationToken.None).ConfigureAwait(false);
+    public async ValueTask DisposeAsync() =>
+        await CloseAsync(CancellationToken.None).ConfigureAwait(false);
 
     private ulong GetHandle() => _state.GetHandle(nameof(SshClient));
 
@@ -189,21 +204,24 @@ public sealed class SftpClient : IAsyncDisposable
         _native.SftpReadAsync(GetHandle(), Required(path), cancellationToken);
 
     /// <summary>Reads a UTF-8 file into a string.</summary>
-    public async Task<string> ReadStringAsync(string path, CancellationToken cancellationToken = default) =>
-        Encoding.UTF8.GetString(await ReadAsync(path, cancellationToken).ConfigureAwait(false));
+    public async Task<string> ReadStringAsync(
+        string path,
+        CancellationToken cancellationToken = default
+    ) => Encoding.UTF8.GetString(await ReadAsync(path, cancellationToken).ConfigureAwait(false));
 
     /// <summary>Creates or truncates a file with the supplied bytes.</summary>
     public Task WriteAsync(
         string path,
         ReadOnlyMemory<byte> data,
-        CancellationToken cancellationToken = default) =>
-        _native.SftpWriteAsync(GetHandle(), Required(path), data, cancellationToken);
+        CancellationToken cancellationToken = default
+    ) => _native.SftpWriteAsync(GetHandle(), Required(path), data, cancellationToken);
 
     /// <summary>Creates or truncates a UTF-8 file.</summary>
     public Task WriteStringAsync(
         string path,
         string content,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(content);
         return WriteAsync(path, Encoding.UTF8.GetBytes(content), cancellationToken);
@@ -225,12 +243,20 @@ public sealed class SftpClient : IAsyncDisposable
     public Task RenameAsync(
         string oldPath,
         string newPath,
-        CancellationToken cancellationToken = default) =>
-        _native.SftpRenameAsync(GetHandle(), Required(oldPath), Required(newPath), cancellationToken);
+        CancellationToken cancellationToken = default
+    ) =>
+        _native.SftpRenameAsync(
+            GetHandle(),
+            Required(oldPath),
+            Required(newPath),
+            cancellationToken
+        );
 
     /// <summary>Resolves a path to its canonical absolute form.</summary>
-    public Task<string> GetRealPathAsync(string path, CancellationToken cancellationToken = default) =>
-        _native.SftpRealPathAsync(GetHandle(), Required(path), cancellationToken);
+    public Task<string> GetRealPathAsync(
+        string path,
+        CancellationToken cancellationToken = default
+    ) => _native.SftpRealPathAsync(GetHandle(), Required(path), cancellationToken);
 
     /// <summary>Reads a symbolic-link target.</summary>
     public Task<string> ReadLinkAsync(string path, CancellationToken cancellationToken = default) =>
@@ -240,15 +266,22 @@ public sealed class SftpClient : IAsyncDisposable
     public Task CreateSymbolicLinkAsync(
         string target,
         string linkPath,
-        CancellationToken cancellationToken = default) =>
-        _native.SftpSymlinkAsync(GetHandle(), Required(target), Required(linkPath), cancellationToken);
+        CancellationToken cancellationToken = default
+    ) =>
+        _native.SftpSymlinkAsync(
+            GetHandle(),
+            Required(target),
+            Required(linkPath),
+            cancellationToken
+        );
 
     /// <summary>Closes and consumes the native SFTP handle.</summary>
     public Task CloseAsync(CancellationToken cancellationToken = default) =>
         _state.CloseAsync(_native.SftpCloseAsync, cancellationToken);
 
     /// <inheritdoc />
-    public async ValueTask DisposeAsync() => await CloseAsync(CancellationToken.None).ConfigureAwait(false);
+    public async ValueTask DisposeAsync() =>
+        await CloseAsync(CancellationToken.None).ConfigureAwait(false);
 
     private ulong GetHandle() => _state.GetHandle(nameof(SftpClient));
 
@@ -290,7 +323,8 @@ public sealed class SshServer : IAsyncDisposable
         _state.CloseAsync(_native.SshServerCloseAsync, cancellationToken);
 
     /// <inheritdoc />
-    public async ValueTask DisposeAsync() => await CloseAsync(CancellationToken.None).ConfigureAwait(false);
+    public async ValueTask DisposeAsync() =>
+        await CloseAsync(CancellationToken.None).ConfigureAwait(false);
 
     private ulong GetHandle() => _state.GetHandle(nameof(SshServer));
 

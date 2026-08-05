@@ -32,17 +32,19 @@ public sealed class AgentClient : IAsyncDisposable
     public Task<RawFrame> RequestAsync(
         byte flags,
         ReadOnlyMemory<byte> body,
-        CancellationToken cancellationToken = default) =>
-        _native.AgentRequestAsync(GetHandle(), flags, body, cancellationToken);
+        CancellationToken cancellationToken = default
+    ) => _native.AgentRequestAsync(GetHandle(), flags, body, cancellationToken);
 
     /// <summary>Opens a raw streaming session.</summary>
     public async Task<AgentStream> StreamAsync(
         byte flags,
         ReadOnlyMemory<byte> body,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         var agentHandle = GetHandle();
-        var stream = await _native.AgentStreamOpenAsync(agentHandle, flags, body, cancellationToken)
+        var stream = await _native
+            .AgentStreamOpenAsync(agentHandle, flags, body, cancellationToken)
             .ConfigureAwait(false);
         return new AgentStream(_native, agentHandle, stream.StreamHandle, stream.Id);
     }
@@ -52,8 +54,8 @@ public sealed class AgentClient : IAsyncDisposable
         uint id,
         byte flags,
         ReadOnlyMemory<byte> body,
-        CancellationToken cancellationToken = default) =>
-        _native.AgentSendAsync(GetHandle(), id, flags, body, cancellationToken);
+        CancellationToken cancellationToken = default
+    ) => _native.AgentSendAsync(GetHandle(), id, flags, body, cancellationToken);
 
     /// <summary>Returns a copy of the cached handshake <c>core.ready</c> CBOR body.</summary>
     public byte[] GetReadyBytes() => _native.AgentReadyBytes(GetHandle());
@@ -63,7 +65,8 @@ public sealed class AgentClient : IAsyncDisposable
         _state.CloseAsync(_native.AgentCloseAsync, cancellationToken);
 
     /// <inheritdoc />
-    public async ValueTask DisposeAsync() => await CloseAsync(CancellationToken.None).ConfigureAwait(false);
+    public async ValueTask DisposeAsync() =>
+        await CloseAsync(CancellationToken.None).ConfigureAwait(false);
 
     private ulong GetHandle() => _state.GetHandle(nameof(AgentClient));
 
@@ -96,10 +99,12 @@ public sealed class AgentStream : IAsyncDisposable
     public Task CloseAsync(CancellationToken cancellationToken = default) =>
         _state.CloseAsync(
             (handle, token) => _native.AgentStreamCloseAsync(_agentHandle, handle, token),
-            cancellationToken);
+            cancellationToken
+        );
 
     /// <inheritdoc />
-    public async ValueTask DisposeAsync() => await CloseAsync(CancellationToken.None).ConfigureAwait(false);
+    public async ValueTask DisposeAsync() =>
+        await CloseAsync(CancellationToken.None).ConfigureAwait(false);
 
     private ulong GetHandle() => _state.GetHandle(nameof(AgentStream));
 

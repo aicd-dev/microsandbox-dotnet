@@ -12,14 +12,20 @@ public sealed class VolumeService
     public Task<VolumeInfo> CreateAsync(
         string name,
         VolumeCreateOptions? options = null,
-        CancellationToken cancellationToken = default) =>
-        _native.CreateVolumeAsync(Required(name), (options ?? new VolumeCreateOptions()).ToJson(), cancellationToken);
+        CancellationToken cancellationToken = default
+    ) =>
+        _native.CreateVolumeAsync(
+            Required(name),
+            (options ?? new VolumeCreateOptions()).ToJson(),
+            cancellationToken
+        );
 
     public Task<VolumeInfo> GetAsync(string name, CancellationToken cancellationToken = default) =>
         _native.GetVolumeAsync(Required(name), cancellationToken);
 
-    public Task<IReadOnlyList<VolumeInfo>> ListAsync(CancellationToken cancellationToken = default) =>
-        _native.ListVolumesAsync(cancellationToken);
+    public Task<IReadOnlyList<VolumeInfo>> ListAsync(
+        CancellationToken cancellationToken = default
+    ) => _native.ListVolumesAsync(cancellationToken);
 
     public Task RemoveAsync(string name, CancellationToken cancellationToken = default) =>
         _native.RemoveVolumeAsync(Required(name), cancellationToken);
@@ -44,13 +50,17 @@ public sealed class VolumeCreateOptions
     public uint SizeMiB { get; init; }
     public IReadOnlyDictionary<string, string>? Labels { get; init; }
 
-    internal string ToJson() => JsonSerializer.Serialize(new Payload
-    {
-        QuotaMiB = QuotaMiB,
-        Kind = Kind,
-        SizeMiB = SizeMiB,
-        Labels = Labels,
-    }, JsonDefaults.Options);
+    internal string ToJson() =>
+        JsonSerializer.Serialize(
+            new Payload
+            {
+                QuotaMiB = QuotaMiB,
+                Kind = Kind,
+                SizeMiB = SizeMiB,
+                Labels = Labels,
+            },
+            JsonDefaults.Options
+        );
 
     private sealed class Payload
     {
@@ -78,7 +88,9 @@ public sealed record VolumeInfo(
     [property: JsonPropertyName("disk_format")] string? DiskFormat,
     [property: JsonPropertyName("disk_fstype")] string? DiskFilesystem,
     [property: JsonPropertyName("labels")] IReadOnlyDictionary<string, string> Labels,
-    [property: JsonPropertyName("created_at_unix")] long? CreatedAtUnix)
+    [property: JsonPropertyName("created_at_unix")] long? CreatedAtUnix
+)
 {
-    public DateTimeOffset? CreatedAt => CreatedAtUnix is { } value ? DateTimeOffset.FromUnixTimeSeconds(value) : null;
+    public DateTimeOffset? CreatedAt =>
+        CreatedAtUnix is { } value ? DateTimeOffset.FromUnixTimeSeconds(value) : null;
 }

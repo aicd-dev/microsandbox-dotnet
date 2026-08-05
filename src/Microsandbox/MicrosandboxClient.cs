@@ -25,7 +25,8 @@ public sealed class MicrosandboxClient
     public SnapshotService Snapshots { get; }
 
     /// <summary>Loads the native ABI from an explicit path, environment, package runtime asset, or system search path.</summary>
-    public static MicrosandboxClient Load(string? nativeLibraryPath = null) => new(NativeApi.Load(nativeLibraryPath));
+    public static MicrosandboxClient Load(string? nativeLibraryPath = null) =>
+        new(NativeApi.Load(nativeLibraryPath));
 
     /// <summary>Gets the microsandbox runtime version exposed by the loaded ABI.</summary>
     public string RuntimeVersion => _native.Version();
@@ -41,16 +42,21 @@ public sealed class MicrosandboxClient
     public async Task<Sandbox> CreateAsync(
         string name,
         SandboxOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ValidateName(name);
-        var handle = await _native.CreateAsync(name, (options ?? new SandboxOptions()).ToJson(), cancellationToken)
+        var handle = await _native
+            .CreateAsync(name, (options ?? new SandboxOptions()).ToJson(), cancellationToken)
             .ConfigureAwait(false);
         return new Sandbox(_native, name, handle);
     }
 
     /// <summary>Looks up persisted sandbox metadata without connecting.</summary>
-    public Task<SandboxHandle> LookupAsync(string name, CancellationToken cancellationToken = default)
+    public Task<SandboxHandle> LookupAsync(
+        string name,
+        CancellationToken cancellationToken = default
+    )
     {
         ValidateName(name);
         return _native.LookupAsync(name, cancellationToken);
@@ -59,8 +65,8 @@ public sealed class MicrosandboxClient
     /// <summary>Lists persisted sandboxes, optionally filtering by labels.</summary>
     public Task<IReadOnlyList<SandboxHandle>> ListAsync(
         SandboxFilter? filter = null,
-        CancellationToken cancellationToken = default) =>
-        _native.ListAsync((filter ?? new SandboxFilter()).ToJson(), cancellationToken);
+        CancellationToken cancellationToken = default
+    ) => _native.ListAsync((filter ?? new SandboxFilter()).ToJson(), cancellationToken);
 
     /// <summary>Connects to an already-running sandbox by name.</summary>
     public Task<Sandbox> ConnectAsync(string name, CancellationToken cancellationToken = default)
@@ -73,14 +79,18 @@ public sealed class MicrosandboxClient
     public Task<Sandbox> StartAsync(
         string name,
         bool detached = false,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ValidateName(name);
         return _native.StartAsync(name, detached, cancellationToken);
     }
 
     /// <summary>Starts a persisted sandbox in detached mode.</summary>
-    public Task<Sandbox> StartDetachedAsync(string name, CancellationToken cancellationToken = default)
+    public Task<Sandbox> StartDetachedAsync(
+        string name,
+        CancellationToken cancellationToken = default
+    )
     {
         ValidateName(name);
         return _native.StartAsync(name, true, cancellationToken);
@@ -95,26 +105,32 @@ public sealed class MicrosandboxClient
 
     /// <summary>Gets point-in-time metrics for every running sandbox, keyed by sandbox name.</summary>
     public Task<IReadOnlyDictionary<string, SandboxMetrics>> AllMetricsAsync(
-        CancellationToken cancellationToken = default) =>
-        _native.AllMetricsAsync(cancellationToken);
+        CancellationToken cancellationToken = default
+    ) => _native.AllMetricsAsync(cancellationToken);
 
     /// <summary>Connects a low-level raw agent client to a running sandbox by name.</summary>
     public async Task<AgentClient> ConnectAgentAsync(
         string name,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ValidateName(name);
-        var handle = await _native.OpenAgentSandboxAsync(name, cancellationToken).ConfigureAwait(false);
+        var handle = await _native
+            .OpenAgentSandboxAsync(name, cancellationToken)
+            .ConfigureAwait(false);
         return new AgentClient(_native, handle);
     }
 
     /// <summary>Connects a low-level raw agent client to a relay socket path.</summary>
     public async Task<AgentClient> ConnectAgentPathAsync(
         string path,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
-        var handle = await _native.OpenAgentPathAsync(path, cancellationToken).ConfigureAwait(false);
+        var handle = await _native
+            .OpenAgentPathAsync(path, cancellationToken)
+            .ConfigureAwait(false);
         return new AgentClient(_native, handle);
     }
 
@@ -130,7 +146,10 @@ public sealed class MicrosandboxClient
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         if (Encoding.UTF8.GetByteCount(name) > 128)
         {
-            throw new ArgumentOutOfRangeException(nameof(name), "Sandbox names cannot exceed 128 UTF-8 bytes.");
+            throw new ArgumentOutOfRangeException(
+                nameof(name),
+                "Sandbox names cannot exceed 128 UTF-8 bytes."
+            );
         }
     }
 }

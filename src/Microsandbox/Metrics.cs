@@ -17,7 +17,8 @@ public sealed record SandboxMetrics(
     [property: JsonPropertyName("upper_used_bytes")] ulong? UpperUsedBytes,
     [property: JsonPropertyName("upper_free_bytes")] ulong? UpperFreeBytes,
     [property: JsonPropertyName("upper_host_allocated_bytes")] ulong? UpperHostAllocatedBytes,
-    [property: JsonPropertyName("uptime_secs")] ulong UptimeSeconds)
+    [property: JsonPropertyName("uptime_secs")] ulong UptimeSeconds
+)
 {
     /// <summary>Gets the sandbox uptime.</summary>
     public TimeSpan Uptime => TimeSpan.FromSeconds(UptimeSeconds);
@@ -45,7 +46,9 @@ public sealed class MetricsStream : IAsyncDisposable
         var handle = Interlocked.Exchange(ref _handle, 0);
         if (handle != 0)
         {
-            await _native.MetricsCloseAsync(checked((ulong)handle), CancellationToken.None).ConfigureAwait(false);
+            await _native
+                .MetricsCloseAsync(checked((ulong)handle), CancellationToken.None)
+                .ConfigureAwait(false);
         }
     }
 

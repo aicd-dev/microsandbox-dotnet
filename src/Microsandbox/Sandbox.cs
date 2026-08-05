@@ -32,39 +32,52 @@ public sealed class Sandbox : IAsyncDisposable
     public Task<ExecResult> ExecuteAsync(
         string command,
         ExecOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(command);
-        return _native.ExecAsync(GetHandle(), command, (options ?? new ExecOptions()).ToJson(), cancellationToken);
+        return _native.ExecAsync(
+            GetHandle(),
+            command,
+            (options ?? new ExecOptions()).ToJson(),
+            cancellationToken
+        );
     }
 
     /// <summary>Starts a command and returns a live streaming exec handle.</summary>
     public async Task<ExecHandle> ExecuteStreamingAsync(
         string command,
         ExecOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(command);
         options ??= new ExecOptions();
-        var handle = await _native.ExecStreamAsync(GetHandle(), command, options.ToJson(), cancellationToken).ConfigureAwait(false);
+        var handle = await _native
+            .ExecStreamAsync(GetHandle(), command, options.ToJson(), cancellationToken)
+            .ConfigureAwait(false);
         return new ExecHandle(_native, handle, options.StdinPipe);
     }
 
     /// <summary>Reads persisted sandbox logs into memory.</summary>
     public Task<IReadOnlyList<LogEntry>> LogsAsync(
         LogOptions? options = null,
-        CancellationToken cancellationToken = default) =>
-        _native.LogsAsync(GetHandle(), (options ?? new LogOptions()).ToJson(), cancellationToken);
+        CancellationToken cancellationToken = default
+    ) => _native.LogsAsync(GetHandle(), (options ?? new LogOptions()).ToJson(), cancellationToken);
 
     /// <summary>Starts a persisted log stream, optionally following new entries.</summary>
     public async Task<LogStream> LogStreamAsync(
         LogStreamOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
-        var handle = await _native.LogStreamAsync(
-            GetHandle(),
-            (options ?? new LogStreamOptions()).ToJson(),
-            cancellationToken).ConfigureAwait(false);
+        var handle = await _native
+            .LogStreamAsync(
+                GetHandle(),
+                (options ?? new LogStreamOptions()).ToJson(),
+                cancellationToken
+            )
+            .ConfigureAwait(false);
         return new LogStream(_native, handle);
     }
 
@@ -75,32 +88,42 @@ public sealed class Sandbox : IAsyncDisposable
     /// <summary>Starts a metrics stream at the requested polling interval.</summary>
     public async Task<MetricsStream> MetricsStreamAsync(
         TimeSpan interval,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         if (interval < TimeSpan.Zero)
         {
             throw new ArgumentOutOfRangeException(nameof(interval), "Interval cannot be negative.");
         }
 
-        var milliseconds = interval > TimeSpan.Zero
-            ? checked((ulong)Math.Ceiling(interval.TotalMilliseconds))
-            : 0;
-        var handle = await _native.MetricsStreamAsync(GetHandle(), milliseconds, cancellationToken).ConfigureAwait(false);
+        var milliseconds =
+            interval > TimeSpan.Zero ? checked((ulong)Math.Ceiling(interval.TotalMilliseconds)) : 0;
+        var handle = await _native
+            .MetricsStreamAsync(GetHandle(), milliseconds, cancellationToken)
+            .ConfigureAwait(false);
         return new MetricsStream(_native, handle);
     }
 
     /// <summary>Runs a shell command through <c>/bin/sh -c</c>.</summary>
-    public Task<ExecResult> ShellAsync(string command, CancellationToken cancellationToken = default)
+    public Task<ExecResult> ShellAsync(
+        string command,
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(command);
-        return ExecuteAsync("/bin/sh", new ExecOptions { Arguments = ["-c", command] }, cancellationToken);
+        return ExecuteAsync(
+            "/bin/sh",
+            new ExecOptions { Arguments = ["-c", command] },
+            cancellationToken
+        );
     }
 
     /// <summary>Starts a command through <c>/bin/sh -c</c> and returns a live streaming exec handle.</summary>
     public Task<ExecHandle> ShellStreamingAsync(
         string command,
         ExecOptions? options = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(command);
         options = (options ?? new ExecOptions()) with { Arguments = ["-c", command] };
@@ -146,8 +169,9 @@ public sealed class Sandbox : IAsyncDisposable
         _native.WaitAsync(GetHandle(), cancellationToken);
 
     /// <summary>Waits until persisted state reports a terminal sandbox status.</summary>
-    public Task<SandboxStopResult> WaitUntilStoppedAsync(CancellationToken cancellationToken = default) =>
-        _native.WaitUntilStoppedAsync(GetHandle(), cancellationToken);
+    public Task<SandboxStopResult> WaitUntilStoppedAsync(
+        CancellationToken cancellationToken = default
+    ) => _native.WaitUntilStoppedAsync(GetHandle(), cancellationToken);
 
     /// <summary>Checks agent reachability without refreshing idle activity.</summary>
     public Task<SandboxPingResult> PingAsync(CancellationToken cancellationToken = default) =>
@@ -161,10 +185,14 @@ public sealed class Sandbox : IAsyncDisposable
     public Task<int> AttachAsync(
         string command,
         IReadOnlyList<string>? arguments = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(command);
-        var options = JsonSerializer.Serialize(new { args = arguments ?? [] }, JsonDefaults.Options);
+        var options = JsonSerializer.Serialize(
+            new { args = arguments ?? [] },
+            JsonDefaults.Options
+        );
         return _native.AttachAsync(GetHandle(), command, options, cancellationToken);
     }
 
@@ -175,17 +203,22 @@ public sealed class Sandbox : IAsyncDisposable
     /// <summary>Opens a low-level raw agent client for this sandbox.</summary>
     public async Task<AgentClient> ConnectAgentAsync(CancellationToken cancellationToken = default)
     {
-        var handle = await _native.OpenAgentSandboxAsync(Name, cancellationToken).ConfigureAwait(false);
+        var handle = await _native
+            .OpenAgentSandboxAsync(Name, cancellationToken)
+            .ConfigureAwait(false);
         return new AgentClient(_native, handle);
     }
 
     /// <summary>Plans or applies a modification through this live handle.</summary>
     public async Task<SandboxModificationPlan> ModifyAsync(
         SandboxModificationOptions options,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(options);
-        var json = await _native.ModifyAsync(GetHandle(), options.ToJson(), cancellationToken).ConfigureAwait(false);
+        var json = await _native
+            .ModifyAsync(GetHandle(), options.ToJson(), cancellationToken)
+            .ConfigureAwait(false);
         return SandboxModificationPlan.Parse(json);
     }
 
