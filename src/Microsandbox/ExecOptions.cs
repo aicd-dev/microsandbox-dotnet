@@ -34,20 +34,24 @@ public sealed record ExecOptions
             throw new ArgumentOutOfRangeException(nameof(Timeout), "Timeout cannot be negative.");
         }
 
-        var timeoutSeconds = Timeout is { } timeout && timeout > TimeSpan.Zero
-            ? checked((ulong)Math.Ceiling(timeout.TotalSeconds))
-            : (ulong?)null;
+        var timeoutSeconds =
+            Timeout is { } timeout && timeout > TimeSpan.Zero
+                ? checked((ulong)Math.Ceiling(timeout.TotalSeconds))
+                : (ulong?)null;
 
-        return JsonSerializer.Serialize(new ExecPayload
-        {
-            Arguments = Arguments,
-            WorkingDirectory = WorkingDirectory,
-            TimeoutSeconds = timeoutSeconds,
-            Tty = Tty,
-            User = User,
-            Environment = Environment,
-            StdinPipe = StdinPipe,
-        }, JsonDefaults.Options);
+        return JsonSerializer.Serialize(
+            new ExecPayload
+            {
+                Arguments = Arguments,
+                WorkingDirectory = WorkingDirectory,
+                TimeoutSeconds = timeoutSeconds,
+                Tty = Tty,
+                User = User,
+                Environment = Environment,
+                StdinPipe = StdinPipe,
+            },
+            JsonDefaults.Options
+        );
     }
 
     private sealed record ExecPayload

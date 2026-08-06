@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -21,25 +20,29 @@
     <RequireNativeAssets Condition="'$(RequireNativeAssets)' == ''">true</RequireNativeAssets>
     <NativeAssetsRoot>$(MSBuildProjectDirectory)/runtimes</NativeAssetsRoot>
   </PropertyGroup>
-
   <ItemGroup>
     <InternalsVisibleTo Include="Microsandbox.Tests" />
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
     <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
   </ItemGroup>
-
   <ItemGroup Condition="'$(IncludeNativeAssets)' == 'true'">
-    <None Include="$(NativeAssetsRoot)/**/native/*"
-          Pack="true"
-          PackagePath="runtimes/%(RecursiveDir)%(Filename)%(Extension)" />
+    <None
+      Include="$(NativeAssetsRoot)/**/native/*"
+      Pack="true"
+      PackagePath="runtimes/%(RecursiveDir)%(Filename)%(Extension)"
+    />
   </ItemGroup>
-
   <Target Name="ValidatePackageVersion" BeforeTargets="GenerateNuspec">
-    <Error Condition="'$(PackageVersion)' != '$(Version)'"
-           Text="PackageVersion must match Version because the managed assembly and native ABI versions must be identical. Set Version in the project before packaging." />
+    <Error
+      Condition="'$(PackageVersion)' != '$(Version)'"
+      Text="PackageVersion must match Version because the managed assembly and native ABI versions must be identical. Set Version in the project before packaging."
+    />
   </Target>
-
-  <Target Name="ValidateNativeAssets" BeforeTargets="GenerateNuspec" Condition="'$(RequireNativeAssets)' == 'true'">
+  <Target
+    Name="ValidateNativeAssets"
+    BeforeTargets="GenerateNuspec"
+    Condition="'$(RequireNativeAssets)' == 'true'"
+  >
     <ItemGroup>
       <RequiredNativeAsset Include="$(NativeAssetsRoot)/linux-x64/native/libmicrosandbox_go_ffi.so" />
       <RequiredNativeAsset Include="$(NativeAssetsRoot)/linux-arm64/native/libmicrosandbox_go_ffi.so" />
@@ -48,16 +51,23 @@
       <RequiredNativeAsset Include="$(NativeAssetsRoot)/win-arm64/native/microsandbox_go_ffi.dll" />
       <MissingNativeAsset Include="@(RequiredNativeAsset)" Condition="!Exists('%(Identity)')" />
     </ItemGroup>
-    <Error Condition="'@(MissingNativeAsset)' != ''"
-           Text="Missing required native runtime assets: @(MissingNativeAsset, ', '). Run 'mise run native-download' or stage an existing download with './scripts/stage-native.sh RELEASE_ASSET_DIR RELEASE_VERSION'." />
-    <Error Condition="!Exists('$(NativeAssetsRoot)/release-version.txt')"
-           Text="Missing native asset release manifest. Run 'mise run native-download' or stage an existing download with './scripts/stage-native.sh RELEASE_ASSET_DIR RELEASE_VERSION'." />
-    <ReadLinesFromFile File="$(NativeAssetsRoot)/release-version.txt"
-                       Condition="Exists('$(NativeAssetsRoot)/release-version.txt')">
+    <Error
+      Condition="'@(MissingNativeAsset)' != ''"
+      Text="Missing required native runtime assets: @(MissingNativeAsset, ', '). Run 'mise run native-download' or stage an existing download with './scripts/stage-native.sh RELEASE_ASSET_DIR RELEASE_VERSION'."
+    />
+    <Error
+      Condition="!Exists('$(NativeAssetsRoot)/release-version.txt')"
+      Text="Missing native asset release manifest. Run 'mise run native-download' or stage an existing download with './scripts/stage-native.sh RELEASE_ASSET_DIR RELEASE_VERSION'."
+    />
+    <ReadLinesFromFile
+      File="$(NativeAssetsRoot)/release-version.txt"
+      Condition="Exists('$(NativeAssetsRoot)/release-version.txt')"
+    >
       <Output TaskParameter="Lines" ItemName="StagedNativeReleaseVersion" />
     </ReadLinesFromFile>
-    <Error Condition="'@(StagedNativeReleaseVersion)' != '$(PackageVersion)'"
-           Text="Staged native assets are release @(StagedNativeReleaseVersion), but the package version is $(PackageVersion). Restage assets from the matching release." />
+    <Error
+      Condition="'@(StagedNativeReleaseVersion)' != '$(PackageVersion)'"
+      Text="Staged native assets are release @(StagedNativeReleaseVersion), but the package version is $(PackageVersion). Restage assets from the matching release."
+    />
   </Target>
-
 </Project>

@@ -15,19 +15,26 @@ Sandbox? fork = null;
 
 try
 {
-    source = await client.CreateAsync(baseName, new SandboxOptions { Image = "alpine:3.20" }, cancellationToken);
+    source = await client.CreateAsync(
+        baseName,
+        new SandboxOptions { Image = "alpine:3.20" },
+        cancellationToken
+    );
     var payload = $"created by {baseName}\n";
     await source.Filesystem.WriteStringAsync(markerPath, payload, cancellationToken);
     await source.StopAsync(cancellationToken: cancellationToken);
     await source.DisposeAsync();
     source = null;
 
-    var artifact = await client.Snapshots.CreateAsync(new SnapshotCreateOptions
-    {
-        Name = snapshotName,
-        SourceSandbox = baseName,
-        RecordIntegrity = true,
-    }, cancellationToken);
+    var artifact = await client.Snapshots.CreateAsync(
+        new SnapshotCreateOptions
+        {
+            Name = snapshotName,
+            SourceSandbox = baseName,
+            RecordIntegrity = true,
+        },
+        cancellationToken
+    );
     Console.WriteLine($"  snapshot: digest={artifact.Digest} size={artifact.SizeBytes} bytes");
 
     var report = await client.Snapshots.VerifyAsync(snapshotName, cancellationToken);
@@ -38,7 +45,11 @@ try
     Require(indexed.Digest == artifact.Digest, "snapshot index digest did not match artifact");
     Console.WriteLine($"  index: name={indexed.Name ?? "(unnamed)"} digest={indexed.Digest}");
 
-    fork = await client.CreateAsync(forkName, new SandboxOptions { Snapshot = snapshotName }, cancellationToken);
+    fork = await client.CreateAsync(
+        forkName,
+        new SandboxOptions { Snapshot = snapshotName },
+        cancellationToken
+    );
     var restored = await fork.Filesystem.ReadStringAsync(markerPath, cancellationToken);
     Require(restored == payload, "fork did not preserve the snapshot marker");
     Console.WriteLine($"  fork preserved: {restored.Trim()}");
@@ -55,13 +66,19 @@ static MicrosandboxClient LoadClient()
 {
     var client = MicrosandboxClient.Load();
     var msbPath = Environment.GetEnvironmentVariable("MICROSANDBOX_MSB_PATH");
-    if (!string.IsNullOrWhiteSpace(msbPath)) client.SetMsbPath(msbPath);
+    if (!string.IsNullOrWhiteSpace(msbPath))
+    {
+        client.SetMsbPath(msbPath);
+    }
     return client;
 }
 
 static void Require(bool condition, string message)
 {
-    if (!condition) throw new InvalidOperationException(message);
+    if (!condition)
+    {
+        throw new InvalidOperationException(message);
+    }
 }
 
 static async Task CleanupSandbox(Sandbox? sandbox, string name, MicrosandboxClient client)
@@ -77,6 +94,12 @@ static async Task CleanupSandbox(Sandbox? sandbox, string name, MicrosandboxClie
 
 static async Task BestEffort(Func<Task> action)
 {
-    try { await action(); }
-    catch (Exception exception) { Console.Error.WriteLine($"cleanup: {exception.Message}"); }
+    try
+    {
+        await action();
+    }
+    catch (Exception exception)
+    {
+        Console.Error.WriteLine($"cleanup: {exception.Message}");
+    }
 }

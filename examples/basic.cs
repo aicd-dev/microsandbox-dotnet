@@ -11,23 +11,34 @@ Sandbox? sandbox = null;
 try
 {
     Console.WriteLine($"Creating sandbox {name}...");
-    sandbox = await client.CreateAsync(name, new SandboxOptions
-    {
-        Image = "alpine:3.20",
-        MemoryMiB = 256,
-        CPUs = 1,
-        Environment = new Dictionary<string, string> { ["GREETING"] = "hello-from-dotnet" },
-    }, cancellationToken);
+    sandbox = await client.CreateAsync(
+        name,
+        new SandboxOptions
+        {
+            Image = "alpine:3.20",
+            MemoryMiB = 256,
+            CPUs = 1,
+            Environment = new Dictionary<string, string> { ["GREETING"] = "hello-from-dotnet" },
+        },
+        cancellationToken
+    );
 
-    var echo = await sandbox.ExecuteAsync("echo", new ExecOptions
-    {
-        Arguments = ["hello", "world"],
-    }, cancellationToken);
-    Require(echo.IsSuccess && echo.StandardOutput.Contains("hello world"), "echo output was unexpected");
+    var echo = await sandbox.ExecuteAsync(
+        "echo",
+        new ExecOptions { Arguments = ["hello", "world"] },
+        cancellationToken
+    );
+    Require(
+        echo.IsSuccess && echo.StandardOutput.Contains("hello world"),
+        "echo output was unexpected"
+    );
     Console.WriteLine($"  echo: {echo.StandardOutput.Trim()}");
 
     var environment = await sandbox.ShellAsync("echo $GREETING", cancellationToken);
-    Require(environment.StandardOutput.Contains("hello-from-dotnet"), "guest environment was not applied");
+    Require(
+        environment.StandardOutput.Contains("hello-from-dotnet"),
+        "guest environment was not applied"
+    );
     Console.WriteLine($"  environment: {environment.StandardOutput.Trim()}");
 
     var nonZero = await sandbox.ShellAsync("exit 42", cancellationToken);
@@ -36,11 +47,16 @@ try
 
     const string payload = "microsandbox .NET filesystem works\n";
     await sandbox.Filesystem.WriteStringAsync("/tmp/dotnet-sdk.txt", payload, cancellationToken);
-    var roundTrip = await sandbox.Filesystem.ReadStringAsync("/tmp/dotnet-sdk.txt", cancellationToken);
+    var roundTrip = await sandbox.Filesystem.ReadStringAsync(
+        "/tmp/dotnet-sdk.txt",
+        cancellationToken
+    );
     Require(roundTrip == payload, "filesystem round trip failed");
 
     var metrics = await sandbox.MetricsAsync(cancellationToken);
-    Console.WriteLine($"  metrics: uptime={metrics.Uptime} memory={metrics.MemoryBytes} cpu={metrics.CpuPercent:F1}%");
+    Console.WriteLine(
+        $"  metrics: uptime={metrics.Uptime} memory={metrics.MemoryBytes} cpu={metrics.CpuPercent:F1}%"
+    );
     Console.WriteLine("Basic example passed.");
 }
 finally

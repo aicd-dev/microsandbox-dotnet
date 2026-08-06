@@ -20,14 +20,13 @@ internal sealed class ConsumingCloseState
     internal ulong GetHandle(string owner)
     {
         var handle = Volatile.Read(ref _handle);
-        return handle > 0
-            ? (ulong)handle
-            : throw new ObjectDisposedException(owner);
+        return handle > 0 ? (ulong)handle : throw new ObjectDisposedException(owner);
     }
 
     internal async Task CloseAsync(
         Func<ulong, CancellationToken, Task> closeAsync,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         await _closeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try

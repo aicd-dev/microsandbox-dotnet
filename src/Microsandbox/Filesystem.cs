@@ -1,6 +1,6 @@
+using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Text.Json.Serialization;
-using System.Runtime.ExceptionServices;
 
 namespace Microsandbox;
 
@@ -21,7 +21,9 @@ public sealed class SandboxFilesystem
         path = Required(path);
         try
         {
-            return await _native.FsReadAsync(_sandbox.GetHandle(), path, cancellationToken).ConfigureAwait(false);
+            return await _native
+                .FsReadAsync(_sandbox.GetHandle(), path, cancellationToken)
+                .ConfigureAwait(false);
         }
         catch (MicrosandboxException exception) when (exception.Kind == "buffer_too_small")
         {
@@ -45,8 +47,10 @@ public sealed class SandboxFilesystem
         }
     }
 
-    public async Task<string> ReadStringAsync(string path, CancellationToken cancellationToken = default) =>
-        Encoding.UTF8.GetString(await ReadAsync(path, cancellationToken).ConfigureAwait(false));
+    public async Task<string> ReadStringAsync(
+        string path,
+        CancellationToken cancellationToken = default
+    ) => Encoding.UTF8.GetString(await ReadAsync(path, cancellationToken).ConfigureAwait(false));
 
     public Task WriteAsync(string path, byte[] data, CancellationToken cancellationToken = default)
     {
@@ -54,23 +58,49 @@ public sealed class SandboxFilesystem
         return _native.FsWriteAsync(_sandbox.GetHandle(), Required(path), data, cancellationToken);
     }
 
-    public Task WriteStringAsync(string path, string content, CancellationToken cancellationToken = default)
+    public Task WriteStringAsync(
+        string path,
+        string content,
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(content);
         return WriteAsync(path, Encoding.UTF8.GetBytes(content), cancellationToken);
     }
 
-    public Task<IReadOnlyList<FilesystemEntry>> ListAsync(string path, CancellationToken cancellationToken = default) =>
-        _native.FsListAsync(_sandbox.GetHandle(), Required(path), cancellationToken);
+    public Task<IReadOnlyList<FilesystemEntry>> ListAsync(
+        string path,
+        CancellationToken cancellationToken = default
+    ) => _native.FsListAsync(_sandbox.GetHandle(), Required(path), cancellationToken);
 
-    public Task<FilesystemStat> StatAsync(string path, CancellationToken cancellationToken = default) =>
-        _native.FsStatAsync(_sandbox.GetHandle(), Required(path), cancellationToken);
+    public Task<FilesystemStat> StatAsync(
+        string path,
+        CancellationToken cancellationToken = default
+    ) => _native.FsStatAsync(_sandbox.GetHandle(), Required(path), cancellationToken);
 
-    public Task CopyFromHostAsync(string hostPath, string guestPath, CancellationToken cancellationToken = default) =>
-        _native.FsCopyFromHostAsync(_sandbox.GetHandle(), Required(hostPath), Required(guestPath), cancellationToken);
+    public Task CopyFromHostAsync(
+        string hostPath,
+        string guestPath,
+        CancellationToken cancellationToken = default
+    ) =>
+        _native.FsCopyFromHostAsync(
+            _sandbox.GetHandle(),
+            Required(hostPath),
+            Required(guestPath),
+            cancellationToken
+        );
 
-    public Task CopyToHostAsync(string guestPath, string hostPath, CancellationToken cancellationToken = default) =>
-        _native.FsCopyToHostAsync(_sandbox.GetHandle(), Required(guestPath), Required(hostPath), cancellationToken);
+    public Task CopyToHostAsync(
+        string guestPath,
+        string hostPath,
+        CancellationToken cancellationToken = default
+    ) =>
+        _native.FsCopyToHostAsync(
+            _sandbox.GetHandle(),
+            Required(guestPath),
+            Required(hostPath),
+            cancellationToken
+        );
 
     public Task MkdirAsync(string path, CancellationToken cancellationToken = default) =>
         _native.FsMkdirAsync(_sandbox.GetHandle(), Required(path), cancellationToken);
@@ -81,11 +111,29 @@ public sealed class SandboxFilesystem
     public Task RemoveDirAsync(string path, CancellationToken cancellationToken = default) =>
         _native.FsRemoveDirAsync(_sandbox.GetHandle(), Required(path), cancellationToken);
 
-    public Task CopyAsync(string source, string destination, CancellationToken cancellationToken = default) =>
-        _native.FsCopyAsync(_sandbox.GetHandle(), Required(source), Required(destination), cancellationToken);
+    public Task CopyAsync(
+        string source,
+        string destination,
+        CancellationToken cancellationToken = default
+    ) =>
+        _native.FsCopyAsync(
+            _sandbox.GetHandle(),
+            Required(source),
+            Required(destination),
+            cancellationToken
+        );
 
-    public Task RenameAsync(string source, string destination, CancellationToken cancellationToken = default) =>
-        _native.FsRenameAsync(_sandbox.GetHandle(), Required(source), Required(destination), cancellationToken);
+    public Task RenameAsync(
+        string source,
+        string destination,
+        CancellationToken cancellationToken = default
+    ) =>
+        _native.FsRenameAsync(
+            _sandbox.GetHandle(),
+            Required(source),
+            Required(destination),
+            cancellationToken
+        );
 
     public Task<bool> ExistsAsync(string path, CancellationToken cancellationToken = default) =>
         _native.FsExistsAsync(_sandbox.GetHandle(), Required(path), cancellationToken);
@@ -93,24 +141,24 @@ public sealed class SandboxFilesystem
     /// <summary>Opens a readable stream for a guest file.</summary>
     public async Task<SandboxFileReadStream> ReadStreamAsync(
         string path,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
-        var handle = await _native.FsReadStreamAsync(
-            _sandbox.GetHandle(),
-            Required(path),
-            cancellationToken).ConfigureAwait(false);
+        var handle = await _native
+            .FsReadStreamAsync(_sandbox.GetHandle(), Required(path), cancellationToken)
+            .ConfigureAwait(false);
         return new SandboxFileReadStream(_native, handle);
     }
 
     /// <summary>Opens a writable stream that must be completed or disposed to commit EOF.</summary>
     public async Task<SandboxFileWriteStream> WriteStreamAsync(
         string path,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
-        var handle = await _native.FsWriteStreamAsync(
-            _sandbox.GetHandle(),
-            Required(path),
-            cancellationToken).ConfigureAwait(false);
+        var handle = await _native
+            .FsWriteStreamAsync(_sandbox.GetHandle(), Required(path), cancellationToken)
+            .ConfigureAwait(false);
         return new SandboxFileWriteStream(_native, handle);
     }
 
@@ -158,12 +206,16 @@ public sealed class SandboxFileReadStream : Stream
 
     /// <inheritdoc />
     public override int Read(byte[] buffer, int offset, int count) =>
-        ReadAsync(buffer.AsMemory(offset, count), CancellationToken.None).AsTask().GetAwaiter().GetResult();
+        ReadAsync(buffer.AsMemory(offset, count), CancellationToken.None)
+            .AsTask()
+            .GetAwaiter()
+            .GetResult();
 
     /// <inheritdoc />
     public override async ValueTask<int> ReadAsync(
         Memory<byte> buffer,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _handle) == 0, this);
         if (buffer.Length == 0 || _eof)
@@ -176,7 +228,9 @@ public sealed class SandboxFileReadStream : Stream
         {
             while (_chunk is null || _chunkOffset == _chunk.Length)
             {
-                _chunk = await _native.FsReadStreamReceiveAsync(GetHandle(), cancellationToken).ConfigureAwait(false);
+                _chunk = await _native
+                    .FsReadStreamReceiveAsync(GetHandle(), cancellationToken)
+                    .ConfigureAwait(false);
                 _chunkOffset = 0;
                 if (_chunk is null)
                 {
@@ -197,9 +251,7 @@ public sealed class SandboxFileReadStream : Stream
     }
 
     /// <inheritdoc />
-    public override void Flush()
-    {
-    }
+    public override void Flush() { }
 
     /// <inheritdoc />
     public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
@@ -208,7 +260,8 @@ public sealed class SandboxFileReadStream : Stream
     public override void SetLength(long value) => throw new NotSupportedException();
 
     /// <inheritdoc />
-    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    public override void Write(byte[] buffer, int offset, int count) =>
+        throw new NotSupportedException();
 
     /// <inheritdoc />
     protected override void Dispose(bool disposing)
@@ -216,7 +269,10 @@ public sealed class SandboxFileReadStream : Stream
         var handle = Interlocked.Exchange(ref _handle, 0);
         if (handle != 0)
         {
-            _native.FsReadStreamCloseAsync(checked((ulong)handle), CancellationToken.None).GetAwaiter().GetResult();
+            _native
+                .FsReadStreamCloseAsync(checked((ulong)handle), CancellationToken.None)
+                .GetAwaiter()
+                .GetResult();
         }
 
         if (disposing)
@@ -232,7 +288,7 @@ public sealed class SandboxFileReadStream : Stream
     {
         Dispose(true);
         GC.SuppressFinalize(this);
-        return ValueTask.CompletedTask;
+        return base.DisposeAsync();
     }
 
     private ulong GetHandle()
@@ -277,10 +333,16 @@ public sealed class SandboxFileWriteStream : Stream
 
     /// <inheritdoc />
     public override void Write(byte[] buffer, int offset, int count) =>
-        WriteAsync(buffer.AsMemory(offset, count), CancellationToken.None).AsTask().GetAwaiter().GetResult();
+        WriteAsync(buffer.AsMemory(offset, count), CancellationToken.None)
+            .AsTask()
+            .GetAwaiter()
+            .GetResult();
 
     /// <inheritdoc />
-    public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+    public override ValueTask WriteAsync(
+        ReadOnlyMemory<byte> buffer,
+        CancellationToken cancellationToken = default
+    )
     {
         var task = _native.FsWriteStreamWriteAsync(GetHandle(), buffer, cancellationToken);
         return new ValueTask(task);
@@ -291,15 +353,14 @@ public sealed class SandboxFileWriteStream : Stream
         _state.CloseAsync(_native.FsWriteStreamCloseAsync, cancellationToken);
 
     /// <inheritdoc />
-    public override void Flush()
-    {
-    }
+    public override void Flush() { }
 
     /// <inheritdoc />
     public override Task FlushAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     /// <inheritdoc />
-    public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    public override int Read(byte[] buffer, int offset, int count) =>
+        throw new NotSupportedException();
 
     /// <inheritdoc />
     public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
@@ -318,6 +379,7 @@ public sealed class SandboxFileWriteStream : Stream
     public override async ValueTask DisposeAsync()
     {
         await CompleteAsync(CancellationToken.None).ConfigureAwait(false);
+        await base.DisposeAsync().ConfigureAwait(false);
         GC.SuppressFinalize(this);
     }
 
@@ -337,15 +399,18 @@ public sealed record FilesystemEntry(
     [property: JsonPropertyName("path")] string Path,
     [property: JsonPropertyName("kind")] FilesystemEntryKind Kind,
     [property: JsonPropertyName("size")] long Size,
-    [property: JsonPropertyName("mode")] uint Mode);
+    [property: JsonPropertyName("mode")] uint Mode
+);
 
 public sealed record FilesystemStat(
     [property: JsonPropertyName("kind")] FilesystemEntryKind Kind,
     [property: JsonPropertyName("size")] long Size,
     [property: JsonPropertyName("mode")] uint Mode,
     [property: JsonPropertyName("readonly")] bool IsReadOnly,
-    [property: JsonPropertyName("modified_unix")] long? ModifiedUnix)
+    [property: JsonPropertyName("modified_unix")] long? ModifiedUnix
+)
 {
-    public DateTimeOffset? ModifiedAt => ModifiedUnix is { } value ? DateTimeOffset.FromUnixTimeSeconds(value) : null;
+    public DateTimeOffset? ModifiedAt =>
+        ModifiedUnix is { } value ? DateTimeOffset.FromUnixTimeSeconds(value) : null;
     public bool IsDirectory => Kind is FilesystemEntryKind.Dir or FilesystemEntryKind.Directory;
 }

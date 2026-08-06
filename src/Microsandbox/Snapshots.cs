@@ -11,53 +11,72 @@ public sealed class SnapshotService
 
     public Task<SnapshotArtifact> CreateAsync(
         SnapshotCreateOptions options,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentException.ThrowIfNullOrWhiteSpace(options.Name);
         ArgumentException.ThrowIfNullOrWhiteSpace(options.SourceSandbox);
-        return _native.CreateSnapshotAsync(options.SourceSandbox, options.ToJson(), cancellationToken);
+        return _native.CreateSnapshotAsync(
+            options.SourceSandbox,
+            options.ToJson(),
+            cancellationToken
+        );
     }
 
-    public Task<SnapshotArtifact> OpenAsync(string pathOrName, CancellationToken cancellationToken = default) =>
-        _native.OpenSnapshotAsync(Required(pathOrName), cancellationToken);
+    public Task<SnapshotArtifact> OpenAsync(
+        string pathOrName,
+        CancellationToken cancellationToken = default
+    ) => _native.OpenSnapshotAsync(Required(pathOrName), cancellationToken);
 
-    public Task<SnapshotVerifyReport> VerifyAsync(string pathOrName, CancellationToken cancellationToken = default) =>
-        _native.VerifySnapshotAsync(Required(pathOrName), cancellationToken);
+    public Task<SnapshotVerifyReport> VerifyAsync(
+        string pathOrName,
+        CancellationToken cancellationToken = default
+    ) => _native.VerifySnapshotAsync(Required(pathOrName), cancellationToken);
 
-    public Task<SnapshotInfo> GetAsync(string nameOrDigest, CancellationToken cancellationToken = default) =>
-        _native.GetSnapshotAsync(Required(nameOrDigest), cancellationToken);
+    public Task<SnapshotInfo> GetAsync(
+        string nameOrDigest,
+        CancellationToken cancellationToken = default
+    ) => _native.GetSnapshotAsync(Required(nameOrDigest), cancellationToken);
 
-    public Task<IReadOnlyList<SnapshotInfo>> ListAsync(CancellationToken cancellationToken = default) =>
-        _native.ListSnapshotsAsync(cancellationToken);
+    public Task<IReadOnlyList<SnapshotInfo>> ListAsync(
+        CancellationToken cancellationToken = default
+    ) => _native.ListSnapshotsAsync(cancellationToken);
 
     public Task<IReadOnlyList<SnapshotArtifact>> ListDirectoryAsync(
         string directory,
-        CancellationToken cancellationToken = default) =>
-        _native.ListSnapshotDirectoryAsync(Required(directory), cancellationToken);
+        CancellationToken cancellationToken = default
+    ) => _native.ListSnapshotDirectoryAsync(Required(directory), cancellationToken);
 
-    public Task RemoveAsync(string pathOrName, bool force = false, CancellationToken cancellationToken = default) =>
-        _native.RemoveSnapshotAsync(Required(pathOrName), force, cancellationToken);
+    public Task RemoveAsync(
+        string pathOrName,
+        bool force = false,
+        CancellationToken cancellationToken = default
+    ) => _native.RemoveSnapshotAsync(Required(pathOrName), force, cancellationToken);
 
-    public Task<uint> ReindexAsync(string directory, CancellationToken cancellationToken = default) =>
-        _native.ReindexSnapshotsAsync(Required(directory), cancellationToken);
+    public Task<uint> ReindexAsync(
+        string directory,
+        CancellationToken cancellationToken = default
+    ) => _native.ReindexSnapshotsAsync(Required(directory), cancellationToken);
 
     public Task ExportAsync(
         string nameOrPath,
         string outputPath,
         SnapshotExportOptions? options = null,
-        CancellationToken cancellationToken = default) =>
+        CancellationToken cancellationToken = default
+    ) =>
         _native.ExportSnapshotAsync(
             Required(nameOrPath),
             Required(outputPath),
             (options ?? new SnapshotExportOptions()).ToJson(),
-            cancellationToken);
+            cancellationToken
+        );
 
     public Task<SnapshotInfo> ImportAsync(
         string archive,
         string destination,
-        CancellationToken cancellationToken = default) =>
-        _native.ImportSnapshotAsync(Required(archive), Required(destination), cancellationToken);
+        CancellationToken cancellationToken = default
+    ) => _native.ImportSnapshotAsync(Required(archive), Required(destination), cancellationToken);
 
     private static string Required(string value)
     {
@@ -76,15 +95,19 @@ public sealed class SnapshotCreateOptions
     public bool RecordIntegrity { get; init; }
     public bool Resumable { get; init; }
 
-    internal string ToJson() => JsonSerializer.Serialize(new Payload
-    {
-        Name = Name,
-        DestinationDirectory = DestinationDirectory,
-        Labels = Labels,
-        Force = Force,
-        RecordIntegrity = RecordIntegrity,
-        Resumable = Resumable,
-    }, JsonDefaults.Options);
+    internal string ToJson() =>
+        JsonSerializer.Serialize(
+            new Payload
+            {
+                Name = Name,
+                DestinationDirectory = DestinationDirectory,
+                Labels = Labels,
+                Force = Force,
+                RecordIntegrity = RecordIntegrity,
+                Resumable = Resumable,
+            },
+            JsonDefaults.Options
+        );
 
     private sealed class Payload
     {
@@ -114,12 +137,16 @@ public sealed class SnapshotExportOptions
     public bool WithImage { get; init; }
     public bool PlainTar { get; init; }
 
-    internal string ToJson() => JsonSerializer.Serialize(new Payload
-    {
-        WithParents = WithParents,
-        WithImage = WithImage,
-        PlainTar = PlainTar,
-    }, JsonDefaults.Options);
+    internal string ToJson() =>
+        JsonSerializer.Serialize(
+            new Payload
+            {
+                WithParents = WithParents,
+                WithImage = WithImage,
+                PlainTar = PlainTar,
+            },
+            JsonDefaults.Options
+        );
 
     private sealed class Payload
     {
@@ -146,7 +173,8 @@ public sealed record SnapshotArtifact(
     [property: JsonPropertyName("parent")] string? Parent,
     [property: JsonPropertyName("created_at")] string CreatedAt,
     [property: JsonPropertyName("labels")] IReadOnlyDictionary<string, string> Labels,
-    [property: JsonPropertyName("source_sandbox")] string? SourceSandbox);
+    [property: JsonPropertyName("source_sandbox")] string? SourceSandbox
+);
 
 public sealed record SnapshotInfo(
     [property: JsonPropertyName("digest")] string Digest,
@@ -157,7 +185,8 @@ public sealed record SnapshotInfo(
     [property: JsonPropertyName("format")] string Format,
     [property: JsonPropertyName("size_bytes")] ulong? SizeBytes,
     [property: JsonPropertyName("created_at_unix")] long CreatedAtUnix,
-    [property: JsonPropertyName("path")] string Path)
+    [property: JsonPropertyName("path")] string Path
+)
 {
     public DateTimeOffset CreatedAt => DateTimeOffset.FromUnixTimeSeconds(CreatedAtUnix);
 }
@@ -165,9 +194,11 @@ public sealed record SnapshotInfo(
 public sealed record SnapshotVerifyReport(
     [property: JsonPropertyName("digest")] string Digest,
     [property: JsonPropertyName("path")] string Path,
-    [property: JsonPropertyName("upper")] SnapshotUpperVerifyStatus Upper);
+    [property: JsonPropertyName("upper")] SnapshotUpperVerifyStatus Upper
+);
 
 public sealed record SnapshotUpperVerifyStatus(
     [property: JsonPropertyName("kind")] string Kind,
     [property: JsonPropertyName("algorithm")] string? Algorithm,
-    [property: JsonPropertyName("digest")] string? Digest);
+    [property: JsonPropertyName("digest")] string? Digest
+);

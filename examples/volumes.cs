@@ -10,15 +10,15 @@ var removed = false;
 
 try
 {
-    var volume = await client.Volumes.CreateAsync(name, new VolumeCreateOptions
-    {
-        QuotaMiB = 64,
-        Labels = new Dictionary<string, string>
+    var volume = await client.Volumes.CreateAsync(
+        name,
+        new VolumeCreateOptions
         {
-            ["team"] = "agents",
-            ["tier"] = "example",
+            QuotaMiB = 64,
+            Labels = new Dictionary<string, string> { ["team"] = "agents", ["tier"] = "example" },
         },
-    }, cancellationToken);
+        cancellationToken
+    );
     Require(volume.Name == name, "created volume name did not match");
 
     var volumes = await client.Volumes.ListAsync(cancellationToken);
@@ -53,17 +53,29 @@ static MicrosandboxClient LoadClient()
 {
     var client = MicrosandboxClient.Load();
     var msbPath = Environment.GetEnvironmentVariable("MICROSANDBOX_MSB_PATH");
-    if (!string.IsNullOrWhiteSpace(msbPath)) client.SetMsbPath(msbPath);
+    if (!string.IsNullOrWhiteSpace(msbPath))
+    {
+        client.SetMsbPath(msbPath);
+    }
     return client;
 }
 
 static void Require(bool condition, string message)
 {
-    if (!condition) throw new InvalidOperationException(message);
+    if (!condition)
+    {
+        throw new InvalidOperationException(message);
+    }
 }
 
 static async Task BestEffort(Func<Task> action)
 {
-    try { await action(); }
-    catch (Exception exception) { Console.Error.WriteLine($"cleanup: {exception.Message}"); }
+    try
+    {
+        await action();
+    }
+    catch (Exception exception)
+    {
+        Console.Error.WriteLine($"cleanup: {exception.Message}");
+    }
 }

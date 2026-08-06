@@ -9,10 +9,13 @@ public enum LogSource
 {
     /// <summary>Standard output.</summary>
     Stdout,
+
     /// <summary>Standard error.</summary>
     Stderr,
+
     /// <summary>Combined process output.</summary>
     Output,
+
     /// <summary>Runtime and kernel diagnostics.</summary>
     System,
 }
@@ -22,20 +25,27 @@ public sealed class LogOptions
 {
     /// <summary>Gets the maximum number of trailing entries to return.</summary>
     public ulong Tail { get; init; }
+
     /// <summary>Gets the inclusive lower timestamp bound.</summary>
     public DateTimeOffset? Since { get; init; }
+
     /// <summary>Gets the exclusive upper timestamp bound.</summary>
     public DateTimeOffset? Until { get; init; }
+
     /// <summary>Gets the sources to include.</summary>
     public IReadOnlyList<LogSource>? Sources { get; init; }
 
-    internal string ToJson() => JsonSerializer.Serialize(new Payload
-    {
-        Tail = Tail,
-        SinceMilliseconds = Since?.ToUnixTimeMilliseconds(),
-        UntilMilliseconds = Until?.ToUnixTimeMilliseconds(),
-        Sources = Sources,
-    }, JsonDefaults.Options);
+    internal string ToJson() =>
+        JsonSerializer.Serialize(
+            new Payload
+            {
+                Tail = Tail,
+                SinceMilliseconds = Since?.ToUnixTimeMilliseconds(),
+                UntilMilliseconds = Until?.ToUnixTimeMilliseconds(),
+                Sources = Sources,
+            },
+            JsonDefaults.Options
+        );
 
     private sealed class Payload
     {
@@ -71,14 +81,18 @@ public sealed class LogStreamOptions
     /// <summary>Gets whether the stream remains open to follow new entries.</summary>
     public bool Follow { get; init; }
 
-    internal string ToJson() => JsonSerializer.Serialize(new Payload
-    {
-        Sources = Sources,
-        SinceMilliseconds = Since?.ToUnixTimeMilliseconds(),
-        FromCursor = FromCursor,
-        UntilMilliseconds = Until?.ToUnixTimeMilliseconds(),
-        Follow = Follow,
-    }, JsonDefaults.Options);
+    internal string ToJson() =>
+        JsonSerializer.Serialize(
+            new Payload
+            {
+                Sources = Sources,
+                SinceMilliseconds = Since?.ToUnixTimeMilliseconds(),
+                FromCursor = FromCursor,
+                UntilMilliseconds = Until?.ToUnixTimeMilliseconds(),
+                Follow = Follow,
+            },
+            JsonDefaults.Options
+        );
 
     private sealed class Payload
     {
@@ -100,7 +114,13 @@ public sealed class LogStreamOptions
 }
 
 /// <summary>One persisted sandbox log entry.</summary>
-public sealed record LogEntry(LogSource Source, ulong? SessionId, DateTimeOffset Timestamp, byte[] Data, string Cursor)
+public sealed record LogEntry(
+    LogSource Source,
+    ulong? SessionId,
+    DateTimeOffset Timestamp,
+    byte[] Data,
+    string Cursor
+)
 {
     /// <summary>Gets the payload decoded as UTF-8 text.</summary>
     public string Text => Encoding.UTF8.GetString(Data);
@@ -128,7 +148,9 @@ public sealed class LogStream : IAsyncDisposable
         var handle = Interlocked.Exchange(ref _handle, 0);
         if (handle != 0)
         {
-            await _native.LogCloseAsync(checked((ulong)handle), CancellationToken.None).ConfigureAwait(false);
+            await _native
+                .LogCloseAsync(checked((ulong)handle), CancellationToken.None)
+                .ConfigureAwait(false);
         }
     }
 

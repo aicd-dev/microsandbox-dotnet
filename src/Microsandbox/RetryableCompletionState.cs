@@ -9,13 +9,13 @@ internal sealed class RetryableCompletionState
 
     internal void EnsureOpen(string owner)
     {
-        if (!IsOpen)
-        {
-            throw new ObjectDisposedException(owner);
-        }
+        ObjectDisposedException.ThrowIf(!IsOpen, owner);
     }
 
-    internal async Task CompleteAsync(Func<CancellationToken, Task> completeAsync, CancellationToken cancellationToken)
+    internal async Task CompleteAsync(
+        Func<CancellationToken, Task> completeAsync,
+        CancellationToken cancellationToken
+    )
     {
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try

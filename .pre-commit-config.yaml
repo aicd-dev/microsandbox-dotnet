@@ -1,0 +1,14 @@
+default_install_hook_types:
+  - pre-commit
+default_stages:
+  - pre-commit
+
+repos:
+  - repo: local
+    hooks:
+      - id: dotnet-format-check
+        name: Verify .NET code style
+        entry: dotnet format Microsandbox.slnx --verify-no-changes --no-restore
+        language: system
+        files: \.(cs|csproj|props|targets|slnx)$
+        pass_filenames: false

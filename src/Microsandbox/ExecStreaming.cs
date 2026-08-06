@@ -8,7 +8,8 @@ public sealed record ExecFailure(
     [property: JsonPropertyName("errno")] int? Errno = null,
     [property: JsonPropertyName("errno_name")] string? ErrnoName = null,
     [property: JsonPropertyName("message")] string Message = "",
-    [property: JsonPropertyName("path")] string? Path = null);
+    [property: JsonPropertyName("path")] string? Path = null
+);
 
 /// <summary>Base type for events received from a streaming exec session.</summary>
 public abstract record ExecEvent;
@@ -34,9 +35,7 @@ public sealed record ExecStdinErrorEvent(ExecFailure Failure) : ExecEvent;
 /// <summary>Indicates that every exec event has been consumed.</summary>
 public sealed record ExecDoneEvent : ExecEvent
 {
-    private ExecDoneEvent()
-    {
-    }
+    private ExecDoneEvent() { }
 
     /// <summary>Gets the shared completion event instance.</summary>
     public static ExecDoneEvent Instance { get; } = new();
@@ -81,14 +80,19 @@ public sealed class ExecHandle : IAsyncDisposable
         _native.ExecSignalAsync(GetHandle(), signal, cancellationToken);
 
     /// <summary>Resizes the pseudo-terminal allocated for this process.</summary>
-    public Task ResizeAsync(ushort rows, ushort columns, CancellationToken cancellationToken = default) =>
-        _native.ExecResizeAsync(GetHandle(), rows, columns, cancellationToken);
+    public Task ResizeAsync(
+        ushort rows,
+        ushort columns,
+        CancellationToken cancellationToken = default
+    ) => _native.ExecResizeAsync(GetHandle(), rows, columns, cancellationToken);
 
     /// <summary>
     /// Takes the process stdin sink once, or returns <see langword="null"/> when stdin was not piped or was already taken.
     /// </summary>
     public ExecStdinSink? TakeStdin() =>
-        _hasStdin && Interlocked.Exchange(ref _stdinTaken, 1) == 0 ? new ExecStdinSink(this, _native) : null;
+        _hasStdin && Interlocked.Exchange(ref _stdinTaken, 1) == 0
+            ? new ExecStdinSink(this, _native)
+            : null;
 
     /// <summary>Releases the native exec handle without killing the process.</summary>
     public async ValueTask DisposeAsync()
@@ -96,7 +100,9 @@ public sealed class ExecHandle : IAsyncDisposable
         var handle = ConsumeHandle(ref _handle);
         if (handle != 0)
         {
-            await _native.ExecCloseAsync(checked((ulong)handle), CancellationToken.None).ConfigureAwait(false);
+            await _native
+                .ExecCloseAsync(checked((ulong)handle), CancellationToken.None)
+                .ConfigureAwait(false);
         }
     }
 
@@ -133,7 +139,10 @@ public sealed class ExecStdinSink : IAsyncDisposable
 
     /// <summary>Closes process stdin. This operation may only be completed once.</summary>
     public Task CompleteAsync(CancellationToken cancellationToken = default) =>
-        _completion.CompleteAsync(token => _native.ExecStdinCloseAsync(_exec.GetHandle(), token), cancellationToken);
+        _completion.CompleteAsync(
+            token => _native.ExecStdinCloseAsync(_exec.GetHandle(), token),
+            cancellationToken
+        );
 
     /// <summary>Completes process stdin without allowing cleanup cancellation.</summary>
     public async ValueTask DisposeAsync() =>

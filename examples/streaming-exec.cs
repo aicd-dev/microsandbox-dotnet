@@ -11,11 +11,18 @@ Sandbox? sandbox = null;
 
 try
 {
-    sandbox = await client.CreateAsync(name, new SandboxOptions { Image = "alpine:3.20" }, cancellationToken);
+    sandbox = await client.CreateAsync(
+        name,
+        new SandboxOptions { Image = "alpine:3.20" },
+        cancellationToken
+    );
 
-    await using (var command = await sandbox.ShellStreamingAsync(
-        "echo out-line; echo err-line >&2; exit 3",
-        cancellationToken: cancellationToken))
+    await using (
+        var command = await sandbox.ShellStreamingAsync(
+            "echo out-line; echo err-line >&2; exit 3",
+            cancellationToken: cancellationToken
+        )
+    )
     {
         var stdout = new StringBuilder();
         var stderr = new StringBuilder();
@@ -42,7 +49,7 @@ try
             }
         }
 
-    Complete:
+        Complete:
         Require(exitCode == 3, $"expected exit 3, got {exitCode}");
         Require(stdout.ToString().Contains("out-line"), "stdout event was not received");
         Require(stderr.ToString().Contains("err-line"), "stderr event was not received");
@@ -50,11 +57,14 @@ try
         Console.WriteLine($"  stderr: {stderr.ToString().Trim()}");
     }
 
-    await using (var sleeper = await sandbox.ShellStreamingAsync("sleep 60", cancellationToken: cancellationToken))
+    await using (
+        var sleeper = await sandbox.ShellStreamingAsync(
+            "sleep 60",
+            cancellationToken: cancellationToken
+        )
+    )
     {
-        while (await sleeper.ReceiveAsync(cancellationToken) is not ExecStartedEvent)
-        {
-        }
+        while (await sleeper.ReceiveAsync(cancellationToken) is not ExecStartedEvent) { }
 
         Console.WriteLine("  sending SIGTERM to long-running command");
         await sleeper.SignalAsync(15, cancellationToken);
@@ -79,17 +89,29 @@ static MicrosandboxClient LoadClient()
 {
     var client = MicrosandboxClient.Load();
     var msbPath = Environment.GetEnvironmentVariable("MICROSANDBOX_MSB_PATH");
-    if (!string.IsNullOrWhiteSpace(msbPath)) client.SetMsbPath(msbPath);
+    if (!string.IsNullOrWhiteSpace(msbPath))
+    {
+        client.SetMsbPath(msbPath);
+    }
     return client;
 }
 
 static void Require(bool condition, string message)
 {
-    if (!condition) throw new InvalidOperationException(message);
+    if (!condition)
+    {
+        throw new InvalidOperationException(message);
+    }
 }
 
 static async Task BestEffort(Func<Task> action)
 {
-    try { await action(); }
-    catch (Exception exception) { Console.Error.WriteLine($"cleanup: {exception.Message}"); }
+    try
+    {
+        await action();
+    }
+    catch (Exception exception)
+    {
+        Console.Error.WriteLine($"cleanup: {exception.Message}");
+    }
 }

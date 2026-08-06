@@ -17,10 +17,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: 10.0.x
+           dotnet-version: 10.0.x
+      - run: dotnet tool restore
       - run: dotnet restore Microsandbox.slnx
-      - run: dotnet build Microsandbox.slnx --no-restore
-      - run: dotnet test Microsandbox.slnx --no-build --no-restore
+      - run: dotnet csharpier check .
+      - run: dotnet format Microsandbox.slnx --verify-no-changes --no-restore
+      - run: dotnet build Microsandbox.slnx --no-restore --configuration Release
+      - run: dotnet test Microsandbox.slnx --no-build --no-restore --configuration Release
       - name: Build examples
         run: for example in examples/*.cs; do dotnet build "$example"; done
       - name: Pack and verify managed-only package
@@ -37,12 +40,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: 10.0.x
+           dotnet-version: 10.0.x
+      - run: dotnet tool restore
       - run: dotnet restore Microsandbox.slnx
-      - run: dotnet build Microsandbox.slnx --no-restore
+      - run: dotnet build Microsandbox.slnx --no-restore --configuration Release
       - name: Download and validate upstream FFI assets
         run: scripts/download-native.sh
       - name: Test downloaded current-platform ABI
         env:
           MICROSANDBOX_FFI_LIBRARY: ${{ github.workspace }}/src/Microsandbox/runtimes/linux-x64/native/libmicrosandbox_go_ffi.so
-        run: dotnet test Microsandbox.slnx --no-build --no-restore
+        run: dotnet test Microsandbox.slnx --no-build --no-restore --configuration Release
