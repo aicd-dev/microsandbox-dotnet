@@ -3,9 +3,15 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to publish, e.g. v0.6.8"
+        required: true
+        type: string
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 permissions:
@@ -21,13 +27,21 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag || github.ref }}
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: 10.0.x
       - name: Validate tag and project version
         id: version
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          case "$RELEASE_TAG" in
+            v[0-9]*.[0-9]*.[0-9]*) ;;
+            *) echo "::error::$RELEASE_TAG is not a v<major>.<minor>.<patch> release tag"; exit 1 ;;
+          esac
+          version="${RELEASE_TAG#v}"
           project_version=$(sed -n 's#.*<Version>\([^<]*\)</Version>.*#\1#p' src/Microsandbox/Microsandbox.csproj)
           if [ "$version" != "$project_version" ]; then
             echo "::error::tag version $version does not match project version $project_version"
