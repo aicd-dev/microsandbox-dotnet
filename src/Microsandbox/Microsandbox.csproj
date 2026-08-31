@@ -7,7 +7,7 @@
     <NoWarn>$(NoWarn);1591</NoWarn>
     <PackageId>AICD.Microsandbox</PackageId>
     <AssemblyName>AICD.Microsandbox</AssemblyName>
-    <Version>0.6.8</Version>
+    <Version>0.6.16</Version>
     <Title>Unofficial microsandbox SDK for .NET</Title>
     <Authors>AICD</Authors>
     <Description>Unofficial, independently maintained .NET SDK for microsandbox with RID-specific native runtime assets. This package is not an official microsandbox distribution.</Description>
